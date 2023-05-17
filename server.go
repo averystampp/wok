@@ -3,6 +3,7 @@ package wok
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"reflect"
 )
 
@@ -14,6 +15,12 @@ func StartServer(config *http.Server, dbconfig DbConfig) error {
 
 	if err := validatedbconfig(dbconfig); err != nil {
 		panic(err)
+	}
+
+	for _, arg := range os.Args {
+		if arg == "createuser" {
+			NewUser(&dbconfig)
+		}
 	}
 
 	// Startup db, this will create a users table if it doesnt already exist.

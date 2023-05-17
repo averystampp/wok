@@ -53,7 +53,7 @@ func CreateUser(user *User) error {
 
 	// Set the role to a user, this is the standard user authorization
 	user.Role = "user"
-	// user.Logged_in = "false"
+	user.Logged_in = "false"
 	// hash users password before inserting into the database
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
