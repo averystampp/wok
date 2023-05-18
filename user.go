@@ -53,13 +53,19 @@ func CreateUser(user *User) error {
 
 	// Set the role to a user, this is the standard user authorization
 	user.Role = "user"
+
+	// set the user to logged out, this requires them to sign after creating their account
 	user.Logged_in = "false"
+
 	// hash users password before inserting into the database
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
+
+	// set the users password as a string of the hash
 	user.Password = string(hash)
+
 	// Insert user values into users table in database,
 	// if there is an error it will return an empty user and the error
 	_, err = database.Exec("INSERT INTO users (firstname, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -102,12 +108,18 @@ func Login(username, password string, w http.ResponseWriter) error {
 			fmt.Println(err)
 			return fmt.Errorf("cannot process request")
 		}
-
+		cook := &http.Cookie{
+			Name:  "session_id",
+			Value: uuid,
+		}
+		http.SetCookie(w, cook)
 		// return the new session_id via a response header
-		w.Header().Add("session_id", uuid)
 		return nil
 	}
 }
+
+// TODO: Add functionality to test that the id of the user logging out is actually the user
+// making the request.
 
 // logs user out, takes their id and sets the logged in status to false...
 // probably could hack something better together, the users uuid should be invalidated
@@ -121,5 +133,50 @@ func Logout(id int) error {
 		return fmt.Errorf("cannot process request")
 	}
 
+	return nil
+}
+
+// same as user function but will create a an admin.
+// This by default is only accesable with the CLI flag "createuser"
+func CreateAdmin(user *User) error {
+	// Check if firstname, lastname, and password are blank
+	// returns error if they are. These fields are required
+	if user.FirstName == "" {
+		return fmt.Errorf("first name is required")
+	}
+	if user.LastName == "" {
+		return fmt.Errorf("last name is required")
+	}
+
+	if user.Password == "" {
+		return fmt.Errorf("password is required")
+	}
+	// Create new UUID for user when their account is created
+	user.SessionID = uuid.New()
+
+	// Set the role to a user, this is the standard user authorization
+	user.Role = "admin"
+
+	// set the user to logged out, this requires them to sign after creating their account
+	user.Logged_in = "false"
+
+	// hash users password before inserting into the database
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// set the users password as a string of the hash
+	user.Password = string(hash)
+
+	// Insert user values into users table in database,
+	// if there is an error it will return an empty user and the error
+	_, err = database.Exec("INSERT INTO users (firstname, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
+		user.FirstName, user.LastName, user.Password, user.Role, user.SessionID, user.Logged_in)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+
+	// return nil for no errors
 	return nil
 }

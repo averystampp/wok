@@ -20,6 +20,7 @@ func StartServer(config *http.Server, dbconfig DbConfig) error {
 	for _, arg := range os.Args {
 		if arg == "createuser" {
 			NewUser(&dbconfig)
+			os.Exit(1)
 		}
 	}
 

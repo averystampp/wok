@@ -38,10 +38,9 @@ func NewUser(conf *DbConfig) {
 				FirstName: username,
 				LastName:  lastname,
 				Password:  password,
-				Role:      "admin",
 			}
 
-			if err := CreateUser(cliUser); err != nil {
+			if err := CreateAdmin(cliUser); err != nil {
 				panic(err)
 			}
 
