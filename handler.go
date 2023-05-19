@@ -7,15 +7,6 @@ import (
 	"strconv"
 )
 
-// GET: returns the homepage
-func Homepage(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		http.ServeFile(w, r, "../public/index.html")
-	} else {
-		w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-	}
-}
-
 // POST: create a user and insert them into the database
 func CreatUserHandle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
