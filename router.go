@@ -1,10 +1,8 @@
 package wok
 
-import (
-	"net/http"
-)
+import "net/http"
 
-func Router() {
+func DefaultRouter() {
 	http.HandleFunc("/", NotFoundPage)
 	http.HandleFunc("/home", Homepage)
 	http.HandleFunc("/user", CreatUserHandle)

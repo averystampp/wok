@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func NewUser(conf *DbConfig) {
+func NewAdmin(conf *DbConfig) {
 	db, err := DbConnect(conf)
 	if err != nil {
 		panic(err)
@@ -46,5 +46,17 @@ func NewUser(conf *DbConfig) {
 
 			break
 		}
+	}
+}
+
+func DropUsersTable(conf *DbConfig) {
+	db, err := DbConnect(conf)
+	if err != nil {
+		fmt.Println(err)
+	}
+	qs := "DROP TABLE users"
+	_, err = db.Exec(qs)
+	if err != nil {
+		fmt.Println(err)
 	}
 }

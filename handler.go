@@ -55,9 +55,18 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		// calls login function SEE: user.go for specs
-		if err := Login(username, password, w); err != nil {
+		uuid, err := Login(username, password)
+
+		if err != nil {
 			w.Write([]byte(err.Error()))
 		}
+
+		cookie := new(http.Cookie)
+
+		cookie.Name = "session_id"
+		cookie.Value = uuid
+
+		http.SetCookie(w, cookie)
 
 	} else {
 		w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
@@ -71,7 +80,7 @@ func Favicon(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "../favicon.ico")
 }
 
-// METHOD ANY: not found page, returns the 404 in the public dir
+// METHOD ANY: not found page, returns 404.html in the public dir
 func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(404)
 	http.ServeFile(w, r, "../public/404.html")
@@ -79,7 +88,6 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 
 func AllUsers(w http.ResponseWriter, r *http.Request) {
 	qs := "SELECT * FROM users"
-
 	rows, err := database.Query(qs)
 	if err != nil {
 		fmt.Println(err)

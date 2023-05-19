@@ -2,7 +2,6 @@ package wok
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -24,7 +23,7 @@ type User struct {
 	// session id of user, conforms to uuid
 	SessionID uuid.UUID `json:"sessionid"`
 
-	// users role, defaults to "user" but "admin" and inactive are also available
+	// users role, defaults to "user" but "admin" and "inactive" are also available
 	Role string `json:"role"`
 
 	Logged_in string `json:"loggedin"`
@@ -82,7 +81,7 @@ func CreateUser(user *User) error {
 // and compares the user submitted password to the hash, will return a uuid on success,
 // status unauthorized if the hash and pass do not match, or a server error if the database
 // cannot return a response.
-func Login(username, password string, w http.ResponseWriter) error {
+func Login(username, password string) (string, error) {
 	qs := "SELECT password FROM users WHERE firstname=$1 LIMIT 1"
 
 	// query db with the supplied username, then writes the hashed password to var pass
@@ -93,29 +92,26 @@ func Login(username, password string, w http.ResponseWriter) error {
 	// compare users password to the hash pulled from the db
 	// if they don't match then server responds with a unauthorized request
 	if err := bcrypt.CompareHashAndPassword([]byte(pass), []byte(password)); err != nil {
-		return fmt.Errorf("incorrect password")
-	} else {
-		// create a new uuid for the user, if there is an error then the handler will
-		// return the error and break the request
-		uuid := uuid.New().String()
-
-		// update the user where their firstname is equal to input
-		// set theie logged in status to true, and also update their session_id
-		// this ensures that the user always has a fresh uuid upon login
-		update := "UPDATE users SET session_id=$1, logged_in=$2 WHERE firstname=$3"
-		_, err := database.Exec(update, uuid, "true", username)
-		if err != nil {
-			fmt.Println(err)
-			return fmt.Errorf("cannot process request")
-		}
-		cook := &http.Cookie{
-			Name:  "session_id",
-			Value: uuid,
-		}
-		http.SetCookie(w, cook)
-		// return the new session_id via a response header
-		return nil
+		return "", fmt.Errorf("incorrect password")
 	}
+
+	// create a new uuid for the user, if there is an error then the handler will
+	// return the error and break the request
+	uuid := uuid.New().String()
+
+	// update the user where their firstname is equal to input
+	// set theie logged in status to true, and also update their session_id
+	// this ensures that the user always has a fresh uuid upon login
+	update := "UPDATE users SET session_id=$1, logged_in=$2 WHERE firstname=$3"
+	_, err := database.Exec(update, uuid, "true", username)
+	if err != nil {
+		fmt.Println(err)
+		return "", fmt.Errorf("cannot process request")
+	}
+
+	// return the new session_id and nil for error
+	return uuid, nil
+
 }
 
 // TODO: Add functionality to test that the id of the user logging out is actually the user
