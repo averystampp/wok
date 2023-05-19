@@ -17,6 +17,7 @@ type DbConfig struct {
 
 var database *sql.DB
 
+// connects to database on server startup, will create the users table if it not already in the database
 func DbStartup(c *DbConfig) (*sql.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
 		c.Host, c.Port, c.User, c.Password, c.Dbname)
@@ -50,6 +51,7 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 
 }
 
+// connect to database without checking if users table is in the db
 func DbConnect(c *DbConfig) (*sql.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
 		c.Host, c.Port, c.User, c.Password, c.Dbname)

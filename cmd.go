@@ -6,6 +6,9 @@ import (
 	"os"
 )
 
+// function to create an admin, currently creating users via the /user route creates a user
+// with the role of "user" this is a way for developers to create admins without having to
+// expose an endpoint
 func NewAdmin(conf *DbConfig) {
 	db, err := DbConnect(conf)
 	if err != nil {
@@ -49,6 +52,7 @@ func NewAdmin(conf *DbConfig) {
 	}
 }
 
+// drops the users table, nice function to have when testing and you want to start fresh
 func DropUsersTable(conf *DbConfig) {
 	db, err := DbConnect(conf)
 	if err != nil {
