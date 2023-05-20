@@ -40,6 +40,9 @@ func StartServer(config *http.Server, dbconfig DbConfig) error {
 	fmt.Printf("| Server starting on localhost%s |\n", config.Addr)
 	fmt.Println("-------------------------------------")
 
+	// call the default router
+	DefaultRouter()
+
 	if err := http.ListenAndServe(config.Addr, config.Handler); err != nil {
 		return err
 	}
