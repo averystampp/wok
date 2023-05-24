@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // POST: create a user and insert them into the database
@@ -49,7 +50,8 @@ func LoginHandle(ctx Context) {
 
 	cookie.Name = "session_id"
 	cookie.Value = uuid
-
+	cookie.HttpOnly = true
+	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.w, cookie)
 
 }
@@ -67,6 +69,12 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AllUsers(ctx Context) {
+
+	if err := UserisUser(ctx); err != nil {
+		ctx.w.Write([]byte(err.Error()))
+		return
+	}
+
 	qs := "SELECT * FROM users"
 	rows, err := database.Query(qs)
 	if err != nil {
@@ -83,7 +91,6 @@ func AllUsers(ctx Context) {
 	if err != nil {
 		ctx.w.Write([]byte(err.Error()))
 	}
-
 	ctx.w.Write(resp)
 }
 
@@ -96,5 +103,11 @@ func LogoutUser(ctx Context) {
 	if err := Logout(parsedId); err != nil {
 		ctx.w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
+
+	cookie := new(http.Cookie)
+
+	cookie.Name = "session_id"
+	cookie.Expires = time.Now().Add(-1 * time.Second).Local()
+	http.SetCookie(ctx.w, cookie)
 
 }

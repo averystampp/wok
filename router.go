@@ -4,13 +4,13 @@ import "net/http"
 
 // includes all the default routes for user creation, login, logout, 404, favicon, and return all users
 func DefaultRouter() {
-	http.HandleFunc("/", NotFoundPage)
-	http.HandleFunc("/favicon.ico", Favicon)
+	http.HandleFunc("/", NotFoundPage)       // not found page, remove if you want your index to be "/"
+	http.HandleFunc("/favicon.ico", Favicon) // favicon route
 
-	http.Handle("/user", Post(CreatUserHandle))
-	http.Handle("/login", Post(LoginHandle))
-	http.Handle("/all", Get(AllUsers))
-	http.Handle("/logout", Get(LogoutUser))
+	http.Handle("/user", Post(CreatUserHandle)) // create a user
+	http.Handle("/login", Post(LoginHandle))    // login to an account
+	http.Handle("/all", Get(AllUsers))          // show all users currently in the database
+	http.Handle("/logout", Get(LogoutUser))     // logout of an account
 }
 
 // Handler func is a way to declare a function that will hold a context
@@ -22,6 +22,7 @@ type Context struct {
 	r *http.Request
 }
 
+// enforces that the client use the POST method for the passed handler
 func Post(handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
@@ -38,6 +39,7 @@ func Post(handle Handler) http.HandlerFunc {
 	}
 }
 
+// enforces that the client use the GET method for the passed handler
 func Get(handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
