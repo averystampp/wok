@@ -69,8 +69,8 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func AllUsers(ctx Context) {
-
-	if err := UserisUser(ctx); err != nil {
+	_, err := UserisAdmin(ctx)
+	if err != nil {
 		ctx.w.Write([]byte(err.Error()))
 		return
 	}
@@ -95,12 +95,12 @@ func AllUsers(ctx Context) {
 }
 
 func LogoutUser(ctx Context) {
-	id := ctx.r.URL.Query().Get("id")
-	parsedId, err := strconv.Atoi(id)
+	id, err := UserisUser(ctx)
 	if err != nil {
-		ctx.w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		ctx.w.Write([]byte(err.Error()))
 	}
-	if err := Logout(parsedId); err != nil {
+
+	if err := Logout(id); err != nil {
 		ctx.w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 
@@ -113,6 +113,12 @@ func LogoutUser(ctx Context) {
 }
 
 func DeleteUserHandle(ctx Context) {
+	_, err := UserisAdmin(ctx)
+	if err != nil {
+		ctx.w.Write([]byte(err.Error()))
+		return
+	}
+
 	id := ctx.r.URL.Query().Get("id")
 	parsedId, err := strconv.Atoi(id)
 	if err != nil {

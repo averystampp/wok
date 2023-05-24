@@ -47,6 +47,8 @@ func StartServer(config *http.Server, dbconfig DbConfig) error {
 		return err
 	}
 
+	defer database.Close()
+
 	return nil
 
 }

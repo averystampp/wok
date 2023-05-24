@@ -42,8 +42,8 @@ func TestLogin(t *testing.T) {
 }
 
 func TestLogout(t *testing.T) {
-	var id int
-	row := database.QueryRow("SELECT id from user where firstname=test")
+	var id string
+	row := database.QueryRow("SELECT session_id from user where firstname=test")
 	row.Scan(&id)
 
 	if err := Logout(id); err != nil {

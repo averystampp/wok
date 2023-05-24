@@ -120,8 +120,8 @@ func Login(username, password string) (string, error) {
 // logs user out, takes their id and sets the logged in status to false...
 // probably could hack something better together, the users uuid should be invalidated
 // need to add a context to the user to create an expiry e.g. ctx.Set("expire in", time.Minutes * 30)
-func Logout(id int) error {
-	qs := "UPDATE users SET logged_in=FALSE WHERE ID=$1"
+func Logout(id string) error {
+	qs := "UPDATE users SET logged_in=FALSE WHERE session_id=$1"
 
 	_, err := database.Exec(qs, id)
 	if err != nil {
