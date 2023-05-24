@@ -17,6 +17,7 @@ func DefaultRouter() {
 // if you do not want this use http.HandleFunc()
 type Handler func(Context)
 
+// context is just a struct of the respose writer and request as used by http handlers
 type Context struct {
 	w http.ResponseWriter
 	r *http.Request
@@ -43,6 +44,72 @@ func Post(handle Handler) http.HandlerFunc {
 func Get(handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
+			w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+			return
+		}
+
+		ctx := Context{
+			w: w,
+			r: r,
+		}
+
+		handle(ctx)
+	}
+}
+
+// enforce the patch method for the passed handler
+func Patch(handle Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PATCH" {
+			w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+			return
+		}
+
+		ctx := Context{
+			w: w,
+			r: r,
+		}
+
+		handle(ctx)
+	}
+}
+
+// enforce put method for the passed handler
+func Put(handle Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+			return
+		}
+
+		ctx := Context{
+			w: w,
+			r: r,
+		}
+
+		handle(ctx)
+	}
+}
+
+func Options(handle Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "OPTIONS" {
+			w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+			return
+		}
+
+		ctx := Context{
+			w: w,
+			r: r,
+		}
+
+		handle(ctx)
+	}
+}
+
+func Delete(handle Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "DELETE" {
 			w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
 			return
 		}
