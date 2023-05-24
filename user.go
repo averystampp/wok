@@ -132,6 +132,17 @@ func Logout(id int) error {
 	return nil
 }
 
+func DeleteUser(id int) error {
+	qs := "DELETE FROM users WHERE ID=$1"
+	_, err := database.Exec(qs, id)
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("cannot process request")
+	}
+
+	return nil
+}
+
 // same as user function but will create a an admin.
 // This by default is only accesable with the CLI flag "createuser"
 func CreateAdmin(user *User) error {

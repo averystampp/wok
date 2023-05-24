@@ -40,3 +40,23 @@ func TestLogin(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestLogout(t *testing.T) {
+	var id int
+	row := database.QueryRow("SELECT id from user where firstname=test")
+	row.Scan(&id)
+
+	if err := Logout(id); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	var id int
+	row := database.QueryRow("SELECT id from user where firstname=test")
+	row.Scan(&id)
+
+	if err := DeleteUser(id); err != nil {
+		t.Error(err)
+	}
+}

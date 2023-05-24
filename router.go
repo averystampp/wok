@@ -11,6 +11,7 @@ func DefaultRouter() {
 	http.Handle("/login", Post(LoginHandle))    // login to an account
 	http.Handle("/all", Get(AllUsers))          // show all users currently in the database
 	http.Handle("/logout", Get(LogoutUser))     // logout of an account
+	http.Handle("/delete", Delete(DeleteUserHandle))
 }
 
 // Handler func is a way to declare a function that will hold a context

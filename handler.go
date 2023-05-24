@@ -111,3 +111,17 @@ func LogoutUser(ctx Context) {
 	http.SetCookie(ctx.w, cookie)
 
 }
+
+func DeleteUserHandle(ctx Context) {
+	id := ctx.r.URL.Query().Get("id")
+	parsedId, err := strconv.Atoi(id)
+	if err != nil {
+		ctx.w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+	}
+	if err := DeleteUser(parsedId); err != nil {
+		ctx.w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+	}
+
+	ctx.w.Write([]byte(http.StatusText(http.StatusOK)))
+
+}
