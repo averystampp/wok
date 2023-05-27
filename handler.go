@@ -71,7 +71,7 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 func AllUsers(ctx Context) {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -91,6 +91,7 @@ func AllUsers(ctx Context) {
 	if err != nil {
 		ctx.w.Write([]byte(err.Error()))
 	}
+
 	ctx.w.Write(resp)
 }
 
@@ -129,5 +130,12 @@ func DeleteUserHandle(ctx Context) {
 	}
 
 	ctx.w.Write([]byte(http.StatusText(http.StatusOK)))
+
+}
+
+func SendEmailHandle(ctx Context) {
+	if err := SendCreateUserEmail(); err != nil {
+		ctx.w.Write([]byte(err.Error()))
+	}
 
 }

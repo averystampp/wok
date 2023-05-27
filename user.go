@@ -114,9 +114,6 @@ func Login(username, password string) (string, error) {
 
 }
 
-// TODO: Add functionality to test that the id of the user logging out is actually the user
-// making the request.
-
 // logs user out, takes their id and sets the logged in status to false...
 // probably could hack something better together, the users uuid should be invalidated
 // need to add a context to the user to create an expiry e.g. ctx.Set("expire in", time.Minutes * 30)

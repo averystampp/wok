@@ -37,18 +37,18 @@ func UserisUser(ctx Context) (string, error) {
 // also returns an error, wrote http into logic because there is multiple errors from this function
 // this function mirrors the UserisUser function but only for admins
 func UserisAdmin(ctx Context) (string, error) {
-	id, err := ctx.r.Cookie("session_id")
-	if err != nil {
-		return "", fmt.Errorf("%s", http.StatusText(http.StatusInternalServerError))
+	id := ctx.r.Header.Get("session_id")
+	if id == "" {
+		ctx.w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := database.QueryRow(qs, id.Value)
+	row := database.QueryRow(qs, id)
 	var role string
 	row.Scan(&role)
 
 	if role == "admin" {
-		return id.Value, nil
+		return id, nil
 	}
 
 	return "", fmt.Errorf("user is not authorized")
