@@ -11,14 +11,14 @@ import (
 // POST: create a user and insert them into the database
 func CreatUserHandle(ctx Context) {
 	user := new(User)
-	err := json.NewDecoder(ctx.r.Body).Decode(&user)
+	err := json.NewDecoder(ctx.Req.Body).Decode(&user)
 	if err != nil {
-		http.Error(ctx.w, err.Error(), http.StatusBadRequest)
+		http.Error(ctx.Resp, err.Error(), http.StatusBadRequest)
 		return
 	}
 	fmt.Println(user)
 	if err := CreateUser(user); err != nil {
-		http.Error(ctx.w, err.Error(), http.StatusBadRequest)
+		http.Error(ctx.Resp, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -27,23 +27,23 @@ func CreatUserHandle(ctx Context) {
 // POST: login user
 func LoginHandle(ctx Context) {
 	// check if username is supplied
-	if ctx.r.FormValue("username") == "" {
-		ctx.w.Write([]byte("must include username\n"))
+	if ctx.Req.FormValue("username") == "" {
+		ctx.Resp.Write([]byte("must include username\n"))
 	}
 	// check if password is supplied
-	if ctx.r.FormValue("password") == "" {
-		ctx.w.Write([]byte("must include password\n"))
+	if ctx.Req.FormValue("password") == "" {
+		ctx.Resp.Write([]byte("must include password\n"))
 	}
 
 	// assign username and password to vars
-	username := ctx.r.FormValue("username")
-	password := ctx.r.FormValue("password")
+	username := ctx.Req.FormValue("username")
+	password := ctx.Req.FormValue("password")
 
 	// calls login function SEE: user.go for specs
 	uuid, err := Login(username, password)
 
 	if err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.Resp.Write([]byte(err.Error()))
 	}
 
 	cookie := new(http.Cookie)
@@ -52,7 +52,7 @@ func LoginHandle(ctx Context) {
 	cookie.Value = uuid
 	cookie.HttpOnly = true
 	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
-	http.SetCookie(ctx.w, cookie)
+	http.SetCookie(ctx.Resp, cookie)
 
 }
 
@@ -71,7 +71,7 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 func AllUsers(ctx Context) {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
-		ctx.w.WriteHeader(http.StatusUnauthorized)
+		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -89,53 +89,53 @@ func AllUsers(ctx Context) {
 	}
 	resp, err := json.Marshal(users)
 	if err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.Resp.Write([]byte(err.Error()))
 	}
 
-	ctx.w.Write(resp)
+	ctx.Resp.Write(resp)
 }
 
 func LogoutUser(ctx Context) {
 	id, err := UserisUser(ctx)
 	if err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.Resp.Write([]byte(err.Error()))
 	}
 
 	if err := Logout(id); err != nil {
-		ctx.w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		ctx.Resp.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 
 	cookie := new(http.Cookie)
 
 	cookie.Name = "session_id"
 	cookie.Expires = time.Now().Add(-1 * time.Second).Local()
-	http.SetCookie(ctx.w, cookie)
+	http.SetCookie(ctx.Resp, cookie)
 
 }
 
 func DeleteUserHandle(ctx Context) {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.Resp.Write([]byte(err.Error()))
 		return
 	}
 
-	id := ctx.r.URL.Query().Get("id")
+	id := ctx.Req.URL.Query().Get("id")
 	parsedId, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		ctx.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 	}
 	if err := DeleteUser(parsedId); err != nil {
-		ctx.w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		ctx.Resp.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 
-	ctx.w.Write([]byte(http.StatusText(http.StatusOK)))
+	ctx.Resp.Write([]byte(http.StatusText(http.StatusOK)))
 
 }
 
 func SendEmailHandle(ctx Context) {
 	if err := SendCreateUserEmail(); err != nil {
-		ctx.w.Write([]byte(err.Error()))
+		ctx.Resp.Write([]byte(err.Error()))
 	}
 
 }

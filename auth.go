@@ -11,7 +11,7 @@ import (
 // if the cookie is in the request and the users role is user or admin, returns the session_id as a string and nil
 // for the error
 func UserisUser(ctx Context) (string, error) {
-	id, err := ctx.r.Cookie("session_id")
+	id, err := ctx.Req.Cookie("session_id")
 	if err != nil {
 		return "", fmt.Errorf("%s", http.StatusText(http.StatusInternalServerError))
 	}
@@ -37,9 +37,9 @@ func UserisUser(ctx Context) (string, error) {
 // also returns an error, wrote http into logic because there is multiple errors from this function
 // this function mirrors the UserisUser function but only for admins
 func UserisAdmin(ctx Context) (string, error) {
-	id := ctx.r.Header.Get("session_id")
+	id := ctx.Req.Header.Get("session_id")
 	if id == "" {
-		ctx.w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+		ctx.Resp.Write([]byte(http.StatusText(http.StatusUnauthorized)))
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"

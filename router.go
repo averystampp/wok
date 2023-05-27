@@ -21,8 +21,8 @@ type Handler func(Context)
 
 // context is just a struct of the respose writer and request as used by http handlers
 type Context struct {
-	w http.ResponseWriter
-	r *http.Request
+	Resp http.ResponseWriter
+	Req  *http.Request
 }
 
 // enforces that the client use the POST method for the passed handler
@@ -34,8 +34,8 @@ func Post(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
@@ -51,8 +51,8 @@ func Get(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
@@ -68,8 +68,8 @@ func Patch(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
@@ -85,8 +85,8 @@ func Put(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
@@ -101,8 +101,8 @@ func Options(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
@@ -117,8 +117,8 @@ func Delete(handle Handler) http.HandlerFunc {
 		}
 
 		ctx := Context{
-			w: w,
-			r: r,
+			Resp: w,
+			Req:  r,
 		}
 
 		handle(ctx)
