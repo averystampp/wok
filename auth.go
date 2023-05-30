@@ -17,7 +17,7 @@ func UserisUser(ctx Context) (string, error) {
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := database.QueryRow(qs, id.Value)
+	row := Database.QueryRow(qs, id.Value)
 	var role string
 	row.Scan(&role)
 
@@ -43,7 +43,7 @@ func UserisAdmin(ctx Context) (string, error) {
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := database.QueryRow(qs, id)
+	row := Database.QueryRow(qs, id)
 	var role string
 	row.Scan(&role)
 

@@ -14,7 +14,7 @@ func NewAdmin(conf *DbConfig) {
 	if err != nil {
 		panic(err)
 	}
-	database = db
+	Database = db
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Enter Username: ")
@@ -60,6 +60,12 @@ func DropUsersTable(conf *DbConfig) {
 	}
 	qs := "DROP TABLE users"
 	_, err = db.Exec(qs)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	qs2 := "DROP TABLE signups"
+	_, err = db.Exec(qs2)
 	if err != nil {
 		fmt.Println(err)
 	}

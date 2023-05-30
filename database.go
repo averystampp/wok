@@ -15,7 +15,7 @@ type DbConfig struct {
 	Dbname   string
 }
 
-var database *sql.DB
+var Database *sql.DB
 
 // connects to database on server startup, will create the users table if it not already in the database
 func DbStartup(c *DbConfig) (*sql.DB, error) {
@@ -34,8 +34,7 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 	_, err = db.Exec(
 		`CREATE TABLE IF NOT EXISTS users (
 	  		id         serial PRIMARY KEY,
-	  		firstname      VARCHAR( 128 ) NOT NULL,
-	  		lastname     VARCHAR( 255 ) NOT NULL,
+	  		email      VARCHAR( 128 ) NOT NULL,
 	  		password     VARCHAR( 255 ) NOT NULL,
 	  		role      VARCHAR( 128 ) NOT NULL,
 	  		session_id      VARCHAR( 128 ) NOT NULL,
@@ -43,10 +42,22 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 			);`)
 
 	if err != nil {
+		fmt.Println("users")
 		fmt.Println(err)
 	}
 
-	database = db
+	_, err = db.Exec(
+		`CREATE TABLE IF NOT EXISTS signups (
+		id         serial PRIMARY KEY,
+		email      VARCHAR( 128 ) NOT NULL
+	);`)
+
+	if err != nil {
+		fmt.Println("signups")
+		fmt.Println(err)
+	}
+
+	Database = db
 	return db, nil
 
 }

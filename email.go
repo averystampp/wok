@@ -1,9 +1,15 @@
 package wok
 
 import (
+	"encoding/json"
 	"net/smtp"
 	"os"
 )
+
+type Email struct {
+	Id      int    `json:"id"`
+	Address string `json:"address"`
+}
 
 func SendCreateUserEmail() error {
 	from := os.Getenv("EMAIL")
@@ -23,5 +29,38 @@ func SendCreateUserEmail() error {
 		return err
 	}
 
+	return nil
+}
+
+func EmailsinQueue() ([]byte, error) {
+	rows, err := Database.Query("SELECT * FROM signups")
+	if err != nil {
+		return nil, err
+	}
+	var elist []Email
+	var e Email
+	for rows.Next() {
+		rows.Scan(&e.Id, &e.Address)
+		elist = append(elist, e)
+	}
+
+	resp, err := json.Marshal(elist)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+
+}
+
+func AddEmailtoQueue(e *Email) error {
+	_, err := Database.Exec("INSERT INTO signups (email) VALUES ($1)", e.Address)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RemoveEmailFromQueue(e *Email) error {
 	return nil
 }

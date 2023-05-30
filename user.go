@@ -67,7 +67,7 @@ func CreateUser(user *User) error {
 
 	// Insert user values into users table in database,
 	// if there is an error it will return an empty user and the error
-	_, err = database.Exec("INSERT INTO users (firstname, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
+	_, err = Database.Exec("INSERT INTO users (email, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
 		user.FirstName, user.LastName, user.Password, user.Role, user.SessionID, user.Logged_in)
 	if err != nil {
 		return fmt.Errorf("%v", err)
@@ -82,11 +82,11 @@ func CreateUser(user *User) error {
 // status unauthorized if the hash and pass do not match, or a server error if the database
 // cannot return a response.
 func Login(username, password string) (string, error) {
-	qs := "SELECT password FROM users WHERE firstname=$1 LIMIT 1"
+	qs := "SELECT password FROM users WHERE email=$1 LIMIT 1"
 
 	// query db with the supplied username, then writes the hashed password to var pass
 	var pass string
-	row := database.QueryRow(qs, username)
+	row := Database.QueryRow(qs, username)
 	row.Scan(&pass)
 
 	// compare users password to the hash pulled from the db
@@ -102,8 +102,8 @@ func Login(username, password string) (string, error) {
 	// update the user where their firstname is equal to input
 	// set theie logged in status to true, and also update their session_id
 	// this ensures that the user always has a fresh uuid upon login
-	update := "UPDATE users SET session_id=$1, logged_in=$2 WHERE firstname=$3"
-	_, err := database.Exec(update, uuid, "true", username)
+	update := "UPDATE users SET session_id=$1, logged_in=$2 WHERE email=$3"
+	_, err := Database.Exec(update, uuid, "true", username)
 	if err != nil {
 		fmt.Println(err)
 		return "", fmt.Errorf("cannot process request")
@@ -120,7 +120,7 @@ func Login(username, password string) (string, error) {
 func Logout(id string) error {
 	qs := "UPDATE users SET logged_in=FALSE WHERE session_id=$1"
 
-	_, err := database.Exec(qs, id)
+	_, err := Database.Exec(qs, id)
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Errorf("cannot process request")
@@ -131,7 +131,7 @@ func Logout(id string) error {
 
 func DeleteUser(id int) error {
 	qs := "DELETE FROM users WHERE ID=$1"
-	_, err := database.Exec(qs, id)
+	_, err := Database.Exec(qs, id)
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Errorf("cannot process request")
@@ -175,7 +175,7 @@ func CreateAdmin(user *User) error {
 
 	// Insert user values into users table in database,
 	// if there is an error it will return an empty user and the error
-	_, err = database.Exec("INSERT INTO users (firstname, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
+	_, err = Database.Exec("INSERT INTO users (email, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
 		user.FirstName, user.LastName, user.Password, user.Role, user.SessionID, user.Logged_in)
 	if err != nil {
 		return fmt.Errorf("%v", err)

@@ -17,7 +17,7 @@ func TestCreateUser(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	database = db
+	Database = db
 	u := new(User)
 
 	u.FirstName = "test"
@@ -43,7 +43,7 @@ func TestLogin(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	var id string
-	row := database.QueryRow("SELECT session_id from user where firstname=test")
+	row := Database.QueryRow("SELECT session_id from user where email=test")
 	row.Scan(&id)
 
 	if err := Logout(id); err != nil {
@@ -53,7 +53,7 @@ func TestLogout(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	var id int
-	row := database.QueryRow("SELECT id from user where firstname=test")
+	row := Database.QueryRow("SELECT id from user where email=test")
 	row.Scan(&id)
 
 	if err := DeleteUser(id); err != nil {

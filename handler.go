@@ -76,7 +76,7 @@ func AllUsers(ctx Context) {
 	}
 
 	qs := "SELECT * FROM users"
-	rows, err := database.Query(qs)
+	rows, err := Database.Query(qs)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -137,5 +137,29 @@ func SendEmailHandle(ctx Context) {
 	if err := SendCreateUserEmail(); err != nil {
 		ctx.Resp.Write([]byte(err.Error()))
 	}
+}
 
+func EnqueueEmail(ctx Context) {
+	email := new(Email)
+	email.Address = ctx.Req.URL.Query().Get("address")
+	if email.Address == "" {
+		ctx.Resp.Write([]byte("must use an email address"))
+	}
+	if err := AddEmailtoQueue(email); err != nil {
+		ctx.Resp.Write([]byte(err.Error()))
+	}
+	ctx.Resp.Write([]byte("added email to queue"))
+}
+
+func DequeueEmail(ctx Context) {
+
+}
+
+func AllEmails(ctx Context) {
+	data, err := EmailsinQueue()
+	if err != nil {
+		ctx.Resp.Write([]byte(err.Error()))
+	}
+
+	ctx.Resp.Write(data)
 }
