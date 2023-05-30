@@ -12,10 +12,7 @@ type User struct {
 	ID int `json:"id"`
 
 	// first name of user
-	FirstName string `json:"firstname"`
-
-	//last name of user
-	LastName string `json:"lastname"`
+	Email string `json:"firstname"`
 
 	// users password
 	Password string `json:"password"`
@@ -37,11 +34,8 @@ func CreateUser(user *User) error {
 
 	// Check if firstname, lastname, and password are blank
 	// returns error if they are. These fields are required
-	if user.FirstName == "" {
+	if user.Email == "" {
 		return fmt.Errorf("first name is required")
-	}
-	if user.LastName == "" {
-		return fmt.Errorf("last name is required")
 	}
 
 	if user.Password == "" {
@@ -67,8 +61,8 @@ func CreateUser(user *User) error {
 
 	// Insert user values into users table in database,
 	// if there is an error it will return an empty user and the error
-	_, err = Database.Exec("INSERT INTO users (email, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
-		user.FirstName, user.LastName, user.Password, user.Role, user.SessionID, user.Logged_in)
+	_, err = Database.Exec("INSERT INTO users (email, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5)",
+		user.Email, user.Password, user.Role, user.SessionID, user.Logged_in)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
@@ -145,11 +139,8 @@ func DeleteUser(id int) error {
 func CreateAdmin(user *User) error {
 	// Check if firstname, lastname, and password are blank
 	// returns error if they are. These fields are required
-	if user.FirstName == "" {
+	if user.Email == "" {
 		return fmt.Errorf("first name is required")
-	}
-	if user.LastName == "" {
-		return fmt.Errorf("last name is required")
 	}
 
 	if user.Password == "" {
@@ -175,8 +166,8 @@ func CreateAdmin(user *User) error {
 
 	// Insert user values into users table in database,
 	// if there is an error it will return an empty user and the error
-	_, err = Database.Exec("INSERT INTO users (email, lastname, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5, $6)",
-		user.FirstName, user.LastName, user.Password, user.Role, user.SessionID, user.Logged_in)
+	_, err = Database.Exec("INSERT INTO users (email, password, role, session_id, logged_in) VALUES ($1, $2, $3, $4, $5)",
+		user.Email, user.Password, user.Role, user.SessionID, user.Logged_in)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}

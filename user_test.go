@@ -20,8 +20,7 @@ func TestCreateUser(t *testing.T) {
 	Database = db
 	u := new(User)
 
-	u.FirstName = "test"
-	u.LastName = "user"
+	u.Email = "test"
 	u.Password = "password"
 
 	if err := CreateUser(u); err != nil {

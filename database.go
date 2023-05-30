@@ -3,6 +3,7 @@ package wok
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -13,6 +14,7 @@ type DbConfig struct {
 	User     string
 	Password string
 	Dbname   string
+	Execs    []string
 }
 
 var Database *sql.DB
@@ -55,6 +57,19 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 	if err != nil {
 		fmt.Println("signups")
 		fmt.Println(err)
+	}
+	if len(c.Execs) > 0 {
+		for _, file := range c.Execs {
+			ex, err := os.ReadFile(file)
+			if err != nil {
+				return nil, err
+			}
+			_, err = db.Exec(string(ex))
+
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 	}
 
 	Database = db

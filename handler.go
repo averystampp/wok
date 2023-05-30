@@ -84,7 +84,7 @@ func AllUsers(ctx Context) {
 	var users []User
 	var user User
 	for rows.Next() {
-		rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Password, &user.Role, &user.SessionID, &user.Logged_in)
+		rows.Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.SessionID, &user.Logged_in)
 		users = append(users, user)
 	}
 	resp, err := json.Marshal(users)

@@ -23,12 +23,6 @@ func NewAdmin(conf *DbConfig) {
 		if len(username) == 0 {
 			break
 		}
-		fmt.Print("Enter Lastname: ")
-		scanner.Scan()
-		lastname := scanner.Text()
-		if len(lastname) == 0 {
-			break
-		}
 
 		fmt.Print("Enter Password: ")
 		scanner.Scan()
@@ -38,9 +32,8 @@ func NewAdmin(conf *DbConfig) {
 		} else {
 
 			cliUser := &User{
-				FirstName: username,
-				LastName:  lastname,
-				Password:  password,
+				Email:    username,
+				Password: password,
 			}
 
 			if err := CreateAdmin(cliUser); err != nil {
