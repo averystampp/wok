@@ -71,6 +71,8 @@ func CreateUser(user *User) error {
 	return nil
 }
 
+// gets all users from the databe. WARNING: Does not paginate
+// this function will return all your users
 func GetAllUsers() ([]User, error) {
 
 	qs := "SELECT * FROM users"
