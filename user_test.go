@@ -59,3 +59,10 @@ func TestDeleteUser(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestAllUsers(t *testing.T) {
+	_, err := GetAllUsers()
+	if err != nil {
+		t.Error(err)
+	}
+}

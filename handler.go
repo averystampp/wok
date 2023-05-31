@@ -75,18 +75,11 @@ func AllUsers(ctx Context) {
 		return
 	}
 
-	qs := "SELECT * FROM users"
-	rows, err := Database.Query(qs)
+	users, err := GetAllUsers()
 	if err != nil {
-		fmt.Println(err)
+		ctx.Resp.Write([]byte(err.Error()))
 	}
 
-	var users []User
-	var user User
-	for rows.Next() {
-		rows.Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.SessionID, &user.Logged_in)
-		users = append(users, user)
-	}
 	resp, err := json.Marshal(users)
 	if err != nil {
 		ctx.Resp.Write([]byte(err.Error()))
@@ -134,9 +127,13 @@ func DeleteUserHandle(ctx Context) {
 }
 
 func SendEmailHandle(ctx Context) {
-	if err := SendCreateUserEmail(); err != nil {
+
+	email := ctx.Req.URL.Query().Get("email")
+	if err := SendCreateUserEmail(email); err != nil {
 		ctx.Resp.Write([]byte(err.Error()))
 	}
+
+	ctx.Resp.Write([]byte("sent an email to" + email))
 }
 
 func EnqueueEmail(ctx Context) {

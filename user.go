@@ -71,6 +71,24 @@ func CreateUser(user *User) error {
 	return nil
 }
 
+func GetAllUsers() ([]User, error) {
+
+	qs := "SELECT * FROM users"
+	rows, err := Database.Query(qs)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []User
+	var user User
+	for rows.Next() {
+		rows.Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.SessionID, &user.Logged_in)
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // takes a username and password, then queries db for the hashed password
 // and compares the user submitted password to the hash, will return a uuid on success,
 // status unauthorized if the hash and pass do not match, or a server error if the database

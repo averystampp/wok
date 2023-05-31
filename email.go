@@ -11,7 +11,7 @@ type Email struct {
 	Address string `json:"address"`
 }
 
-func SendCreateUserEmail() error {
+func SendCreateUserEmail(email string) error {
 	from := os.Getenv("EMAIL")
 	password := os.Getenv("PASSWORD")
 
@@ -25,7 +25,7 @@ func SendCreateUserEmail() error {
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
 
-	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{"amstampp18@gmail.com"}, []byte(subject+mime+string(body))); err != nil {
+	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{email}, []byte(subject+mime+string(body))); err != nil {
 		return err
 	}
 
