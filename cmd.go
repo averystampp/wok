@@ -51,15 +51,21 @@ func DropUsersTable(conf *DbConfig) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	qs := "DROP TABLE users"
-	_, err = db.Exec(qs)
-	if err != nil {
-		fmt.Println(err)
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print("Type Table Name to drop: ")
+		scanner.Scan()
+		table := scanner.Text()
+		if len(table) == 0 {
+			break
+		}
+		qs := "DROP TABLE " + table
+		_, err = db.Exec(qs)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
 	}
 
-	qs2 := "DROP TABLE signups"
-	_, err = db.Exec(qs2)
-	if err != nil {
-		fmt.Println(err)
-	}
 }

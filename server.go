@@ -23,7 +23,7 @@ func StartServer(config *http.Server, dbconfig DbConfig) error {
 			os.Exit(0)
 		}
 
-		if arg == "dropusers" {
+		if arg == "droptable" {
 			DropUsersTable(&dbconfig)
 			os.Exit(0)
 		}

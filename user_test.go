@@ -42,9 +42,10 @@ func TestLogin(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	var id string
-	row := Database.QueryRow("SELECT session_id from user where email=test")
-	row.Scan(&id)
-
+	row := Database.QueryRow("SELECT session_id FROM users WHERE email='test'")
+	if err := row.Scan(&id); err != nil {
+		t.Error(err)
+	}
 	if err := Logout(id); err != nil {
 		t.Error(err)
 	}
@@ -52,9 +53,11 @@ func TestLogout(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	var id int
-	row := Database.QueryRow("SELECT id from user where email=test")
-	row.Scan(&id)
-
+	row := Database.QueryRow("SELECT id from users where email='test'")
+	if err := row.Scan(&id); err != nil {
+		t.Error(err)
+	}
+	t.Log(id)
 	if err := DeleteUser(id); err != nil {
 		t.Error(err)
 	}

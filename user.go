@@ -132,7 +132,7 @@ func Login(username, password string) (string, error) {
 // probably could hack something better together, the users uuid should be invalidated
 // need to add a context to the user to create an expiry e.g. ctx.Set("expire in", time.Minutes * 30)
 func Logout(id string) error {
-	qs := "UPDATE users SET logged_in=FALSE WHERE session_id=$1"
+	qs := "UPDATE users SET logged_in=false WHERE session_id=$1"
 
 	_, err := Database.Exec(qs, id)
 	if err != nil {

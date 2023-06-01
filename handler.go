@@ -64,7 +64,6 @@ func Favicon(w http.ResponseWriter, r *http.Request) {
 
 // METHOD ANY: not found page, returns 404.html in the public dir
 func NotFoundPage(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(404)
 	http.ServeFile(w, r, "../public/404.html")
 }
 

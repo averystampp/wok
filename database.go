@@ -4,25 +4,35 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
 
 type DbConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	Dbname   string
-	Execs    []string
+	Host            string
+	Port            int
+	User            string
+	Password        string
+	Dbname          string
+	MigrationFolder string
+	Compose         bool
 }
 
 var Database *sql.DB
 
 // connects to database on server startup, will create the users table if it not already in the database
 func DbStartup(c *DbConfig) (*sql.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
-		c.Host, c.Port, c.User, c.Password, c.Dbname)
+	var psqlInfo string
+	if c.Compose {
+		psqlInfo = fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", c.User, c.Password, c.Dbname, c.Port)
+
+	} else {
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
+			c.Host, c.Port, c.User, c.Password, c.Dbname)
+
+	}
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		return nil, err
@@ -58,18 +68,27 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 		fmt.Println("signups")
 		fmt.Println(err)
 	}
-	if len(c.Execs) > 0 {
-		for _, file := range c.Execs {
-			ex, err := os.ReadFile(file)
-			if err != nil {
-				return nil, err
-			}
-			_, err = db.Exec(string(ex))
 
-			if err != nil {
-				fmt.Println(err)
-			}
+	dir, err := os.ReadDir(c.MigrationFolder)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, migration := range dir {
+		if strings.Split(migration.Name(), ".")[1] != "sql" {
+			return nil, fmt.Errorf("file does not have .sql extension: %s", migration.Name())
 		}
+
+		migrate, err := os.ReadFile("./migrations/" + migration.Name())
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, err = db.Exec(string(migrate))
+		if err != nil {
+			fmt.Println(err)
+		}
+
 	}
 
 	Database = db

@@ -9,5 +9,4 @@ COPY . ./
 EXPOSE 8080
 
 RUN go build ./cmd/main.go
-
 CMD ["./main"]
