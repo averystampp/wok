@@ -16,22 +16,14 @@ type DbConfig struct {
 	Password        string
 	Dbname          string
 	MigrationFolder string
-	Compose         bool
 }
 
 var Database *sql.DB
 
 // connects to database on server startup, will create the users table if it not already in the database
 func DbStartup(c *DbConfig) (*sql.DB, error) {
-	var psqlInfo string
-	if c.Compose {
-		psqlInfo = fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", c.User, c.Password, c.Dbname, c.Port)
 
-	} else {
-		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
-			c.Host, c.Port, c.User, c.Password, c.Dbname)
-
-	}
+	psqlInfo := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", c.User, c.Password, c.Host, c.Port, c.Dbname)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -76,6 +68,7 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 	}
 
 	for _, migration := range dir {
+
 		if strings.Split(migration.Name(), ".")[1] != "sql" {
 			return nil, fmt.Errorf("file does not have .sql extension: %s", migration.Name())
 		}
