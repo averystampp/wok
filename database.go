@@ -73,7 +73,7 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 			return nil, fmt.Errorf("file does not have .sql extension: %s", migration.Name())
 		}
 
-		migrate, err := os.ReadFile("./migrations/" + migration.Name())
+		migrate, err := os.ReadFile(c.MigrationFolder + migration.Name())
 		if err != nil {
 			fmt.Println(err)
 		}
