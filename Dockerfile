@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
-COPY . ./
+COPY . .
 
 EXPOSE 8080
 
-RUN go build ./cmd/main.go
-CMD ["./main"]
+RUN go build /app/test/main.go
+CMD ["/app/main"]
