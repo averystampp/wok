@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -53,7 +54,13 @@ func LoginHandle(ctx Context) {
 	cookie.HttpOnly = true
 	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.Resp, cookie)
-	http.Redirect(ctx.Resp, ctx.Req, "http://localhost:8080/home", http.StatusSeeOther)
+	var host string
+	if os.Getenv("prod") == "true" {
+		host = "https://idkwtptda.com"
+	} else {
+		host = "http://localhost:8080"
+	}
+	http.Redirect(ctx.Resp, ctx.Req, host+"/home", http.StatusSeeOther)
 
 }
 
@@ -103,6 +110,13 @@ func LogoutUser(ctx Context) {
 	cookie.Name = "session_id"
 	cookie.Expires = time.Now().Add(-1 * time.Second).Local()
 	http.SetCookie(ctx.Resp, cookie)
+	var host string
+	if os.Getenv("prod") == "true" {
+		host = "https://idkwtptda.com"
+	} else {
+		host = "http://localhost:8080"
+	}
+	http.Redirect(ctx.Resp, ctx.Req, host+"/home", http.StatusSeeOther)
 
 }
 
