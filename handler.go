@@ -53,7 +53,7 @@ func LoginHandle(ctx Context) {
 	cookie.HttpOnly = true
 	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.Resp, cookie)
-	http.Redirect(ctx.Resp, ctx.Req, "/home", 200)
+	http.Redirect(ctx.Resp, ctx.Req, "http://localhost:8080/home", http.StatusSeeOther)
 
 }
 
