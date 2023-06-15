@@ -56,10 +56,10 @@ func LoginHandle(ctx Context) {
 	http.SetCookie(ctx.Resp, cookie)
 
 	c := new(http.Cookie)
-	cookie.Name = "logged_in"
-	cookie.Value = "true"
-	cookie.HttpOnly = true
-	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
+	c.Name = "logged_in"
+	c.Value = "true"
+	c.HttpOnly = true
+	c.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.Resp, c)
 
 	var host string
@@ -120,10 +120,10 @@ func LogoutUser(ctx Context) {
 	http.SetCookie(ctx.Resp, cookie)
 
 	c := new(http.Cookie)
-	cookie.Name = "logged_in"
-	cookie.Value = "false"
-	cookie.HttpOnly = true
-	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
+	c.Name = "logged_in"
+	c.Value = "false"
+	c.HttpOnly = true
+	c.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.Resp, c)
 	var host string
 
