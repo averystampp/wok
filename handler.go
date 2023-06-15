@@ -54,6 +54,14 @@ func LoginHandle(ctx Context) {
 	cookie.HttpOnly = true
 	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
 	http.SetCookie(ctx.Resp, cookie)
+
+	c := new(http.Cookie)
+	cookie.Name = "logged_in"
+	cookie.Value = "true"
+	cookie.HttpOnly = true
+	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
+	http.SetCookie(ctx.Resp, c)
+
 	var host string
 	if os.Getenv("prod") == "true" {
 		host = "https://idkwtptda.com"
@@ -110,7 +118,15 @@ func LogoutUser(ctx Context) {
 	cookie.Name = "session_id"
 	cookie.Expires = time.Now().Add(-1 * time.Second).Local()
 	http.SetCookie(ctx.Resp, cookie)
+
+	c := new(http.Cookie)
+	cookie.Name = "logged_in"
+	cookie.Value = "false"
+	cookie.HttpOnly = true
+	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
+	http.SetCookie(ctx.Resp, c)
 	var host string
+
 	if os.Getenv("prod") == "true" {
 		host = "https://idkwtptda.com"
 	} else {
