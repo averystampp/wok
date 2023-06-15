@@ -13,7 +13,7 @@ import (
 func UserisUser(ctx Context) (string, error) {
 	id, err := ctx.Req.Cookie("session_id")
 	if err != nil {
-		return "", fmt.Errorf("%s", http.StatusText(http.StatusInternalServerError))
+		return "", fmt.Errorf("%s", http.StatusText(http.StatusUnauthorized))
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
@@ -39,7 +39,7 @@ func UserisUser(ctx Context) (string, error) {
 func UserisAdmin(ctx Context) (string, error) {
 	id := ctx.Req.Header.Get("session_id")
 	if id == "" {
-		ctx.Resp.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+		return "", fmt.Errorf("must include a session id")
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
@@ -52,5 +52,24 @@ func UserisAdmin(ctx Context) (string, error) {
 	}
 
 	return "", fmt.Errorf("user is not authorized")
+
+}
+
+func QueryUserfromDb(ctx Context) (string, error) {
+	id, err := ctx.Req.Cookie("session_id")
+	if err != nil {
+		return "", fmt.Errorf("must send a session_id")
+	}
+
+	qs := "SELECT role FROM users WHERE session_id=$1"
+	row := Database.QueryRow(qs, id.Value)
+	var role string
+	row.Scan(&role)
+
+	if role != "" {
+		return role, nil
+	}
+
+	return "", fmt.Errorf("error getting role from database")
 
 }
