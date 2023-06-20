@@ -10,30 +10,30 @@ import (
 )
 
 // POST: create a user and insert them into the database
-func CreatUserHandle(ctx Context) {
+func CreatUserHandle(ctx Context) error {
 	user := new(User)
 	err := json.NewDecoder(ctx.Req.Body).Decode(&user)
 	if err != nil {
-		http.Error(ctx.Resp, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 	fmt.Println(user)
 	if err := CreateUser(user); err != nil {
-		http.Error(ctx.Resp, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
+
+	return nil
 
 }
 
 // POST: login user
-func LoginHandle(ctx Context) {
+func LoginHandle(ctx Context) error {
 	// check if username is supplied
 	if ctx.Req.FormValue("username") == "" {
-		ctx.Resp.Write([]byte("must include username\n"))
+		return fmt.Errorf("must include username")
 	}
 	// check if password is supplied
 	if ctx.Req.FormValue("password") == "" {
-		ctx.Resp.Write([]byte("must include password\n"))
+		return fmt.Errorf("must include password")
 	}
 
 	// assign username and password to vars
@@ -42,9 +42,8 @@ func LoginHandle(ctx Context) {
 
 	// calls login function SEE: user.go for specs
 	uuid, err := Login(username, password)
-
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 
 	cookie := new(http.Cookie)
@@ -69,7 +68,7 @@ func LoginHandle(ctx Context) {
 		host = "http://localhost:8080"
 	}
 	http.Redirect(ctx.Resp, ctx.Req, host+"/home", http.StatusSeeOther)
-
+	return nil
 }
 
 // METHOD N/A: handles the favicon, replace the favicon in the root to what you would like, default is the old gopher
@@ -83,34 +82,34 @@ func NotFoundPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "../public/404.html")
 }
 
-func AllUsers(ctx Context) {
+func AllUsers(ctx Context) error {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
-		ctx.Resp.WriteHeader(http.StatusUnauthorized)
-		return
+		return err
 	}
 
 	users, err := GetAllUsers()
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 
 	resp, err := json.Marshal(users)
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 
 	ctx.Resp.Write(resp)
+	return nil
 }
 
-func LogoutUser(ctx Context) {
+func LogoutUser(ctx Context) error {
 	id, err := UserisUser(ctx)
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 
 	if err := Logout(id); err != nil {
-		ctx.Resp.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return err
 	}
 
 	cookie := new(http.Cookie)
@@ -133,60 +132,59 @@ func LogoutUser(ctx Context) {
 		host = "http://localhost:8080"
 	}
 	http.Redirect(ctx.Resp, ctx.Req, host+"/home", http.StatusSeeOther)
-
+	return nil
 }
 
-func DeleteUserHandle(ctx Context) {
+func DeleteUserHandle(ctx Context) error {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
-		return
+		return err
 	}
 
 	id := ctx.Req.URL.Query().Get("id")
 	parsedId, err := strconv.Atoi(id)
 	if err != nil {
-		ctx.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return err
 	}
 	if err := DeleteUser(parsedId); err != nil {
-		ctx.Resp.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return err
 	}
 
-	ctx.Resp.Write([]byte(http.StatusText(http.StatusOK)))
-
+	return nil
 }
 
-func SendEmailHandle(ctx Context) {
+func SendEmailHandle(ctx Context) error {
 
 	email := ctx.Req.URL.Query().Get("email")
 	if err := SendCreateUserEmail(email); err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
-
-	ctx.Resp.Write([]byte("sent an email to" + email))
+	return nil
 }
 
-func EnqueueEmail(ctx Context) {
+func EnqueueEmail(ctx Context) error {
 	email := new(Email)
 	email.Address = ctx.Req.URL.Query().Get("address")
 	if email.Address == "" {
-		ctx.Resp.Write([]byte("must use an email address"))
+		return fmt.Errorf("must use an email address")
 	}
 	if err := AddEmailtoQueue(email); err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 	ctx.Resp.Write([]byte("added email to queue"))
+	return nil
 }
 
-func DequeueEmail(ctx Context) {
-
+func DequeueEmail(ctx Context) error {
+	return nil
 }
 
-func AllEmails(ctx Context) {
+func AllEmails(ctx Context) error {
 	data, err := EmailsinQueue()
 	if err != nil {
-		ctx.Resp.Write([]byte(err.Error()))
+		return err
 	}
 
 	ctx.Resp.Write(data)
+	return nil
 }
