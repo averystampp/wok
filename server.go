@@ -43,11 +43,11 @@ func (config *Wok) StartServer(dbconfig DbConfig) error {
 	// call the default router
 	DefaultRouter(config)
 	if config.tls {
-		if err := http.ListenAndServeTLS(config.address, config.certFile, config.keyFile, config.mux); err != nil {
+		if err := http.ListenAndServeTLS(config.address, config.certFile, config.keyFile, config.Mux); err != nil {
 			return err
 		}
 	} else {
-		if err := http.ListenAndServe(config.address, config.mux); err != nil {
+		if err := http.ListenAndServe(config.address, config.Mux); err != nil {
 			return err
 		}
 	}

@@ -4,17 +4,17 @@ import "net/http"
 
 // includes all the default routes for user creation, login, logout, 404, favicon, and return all users
 func DefaultRouter(wok *Wok) {
-	wok.mux.HandleFunc("/", NotFoundPage)       // not found page, remove if you want your index to be "/"
-	wok.mux.HandleFunc("/favicon.ico", Favicon) // favicon route
+	wok.Mux.HandleFunc("/", NotFoundPage)       // not found page, remove if you want your index to be "/"
+	wok.Mux.HandleFunc("/favicon.ico", Favicon) // favicon route
 
-	wok.mux.Handle("/user", wok.Post(CreatUserHandle)) // create a user
-	wok.mux.Handle("/login", wok.Post(LoginHandle))    // login to an account
-	wok.mux.Handle("/all", wok.Get(AllUsers))          // show all users currently in the database
-	wok.mux.Handle("/logout", wok.Get(LogoutUser))     // logout of an account
-	wok.mux.Handle("/delete", wok.Delete(DeleteUserHandle))
-	wok.mux.Handle("/email", wok.Get(SendEmailHandle))
-	wok.mux.Handle("/addemail", wok.Post(EnqueueEmail))
-	wok.mux.Handle("/getemails", wok.Get(AllEmails))
+	wok.Mux.Handle("/user", wok.Post(CreatUserHandle)) // create a user
+	wok.Mux.Handle("/login", wok.Post(LoginHandle))    // login to an account
+	wok.Mux.Handle("/all", wok.Get(AllUsers))          // show all users currently in the database
+	wok.Mux.Handle("/logout", wok.Get(LogoutUser))     // logout of an account
+	wok.Mux.Handle("/delete", wok.Delete(DeleteUserHandle))
+	wok.Mux.Handle("/email", wok.Get(SendEmailHandle))
+	wok.Mux.Handle("/addemail", wok.Post(EnqueueEmail))
+	wok.Mux.Handle("/getemails", wok.Get(AllEmails))
 }
 
 // Handler func is a way to declare a function that will hold a context
@@ -29,7 +29,7 @@ type Context struct {
 
 type Wok struct {
 	address  string
-	mux      *http.ServeMux
+	Mux      *http.ServeMux
 	tls      bool
 	certFile string
 	keyFile  string
@@ -41,7 +41,7 @@ func NewWok(tls bool, addr, certfile, keyfile string) *Wok {
 		tls:      tls,
 		certFile: certfile,
 		keyFile:  keyfile,
-		mux:      new(http.ServeMux),
+		Mux:      new(http.ServeMux),
 	}
 }
 
