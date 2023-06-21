@@ -53,7 +53,7 @@ func EmailsinQueue() ([]byte, error) {
 
 }
 
-func AddEmailtoQueue(e *Email) error {
+func (e *Email) AddEmailtoQueue() error {
 	_, err := Database.Exec("INSERT INTO signups (email, name) VALUES ($1, $2)", e.Address, e.Name)
 	if err != nil {
 		return err
@@ -62,6 +62,10 @@ func AddEmailtoQueue(e *Email) error {
 	return nil
 }
 
-func RemoveEmailFromQueue(e *Email) error {
+func (e *Email) RemoveEmailFromQueue() error {
+	_, err := Database.Exec("DELETE FROM signups WHERE id=$1", e.Id)
+	if err != nil {
+		return err
+	}
 	return nil
 }

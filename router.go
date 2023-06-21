@@ -2,11 +2,8 @@ package wok
 
 import "net/http"
 
-// includes all the default routes for user creation, login, logout, 404, favicon, and return all users
+// includes all the default routes for user creation, login, logout, and return all users
 func DefaultRouter(wok *Wok) {
-	wok.Mux.HandleFunc("/", NotFoundPage)       // not found page, remove if you want your index to be "/"
-	wok.Mux.HandleFunc("/favicon.ico", Favicon) // favicon route
-
 	wok.Mux.Handle("/user", wok.Post(CreatUserHandle)) // create a user
 	wok.Mux.Handle("/login", wok.Post(LoginHandle))    // login to an account
 	wok.Mux.Handle("/all", wok.Get(AllUsers))          // show all users currently in the database
@@ -15,6 +12,7 @@ func DefaultRouter(wok *Wok) {
 	wok.Mux.Handle("/email", wok.Get(SendEmailHandle))
 	wok.Mux.Handle("/addemail", wok.Post(EnqueueEmail))
 	wok.Mux.Handle("/getemails", wok.Get(AllEmails))
+	wok.Mux.Handle("/deleteemail", wok.Delete(DequeueEmail))
 }
 
 // Handler func is a way to declare a function that will hold a context

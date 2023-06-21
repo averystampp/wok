@@ -71,17 +71,6 @@ func LoginHandle(ctx Context) error {
 	return nil
 }
 
-// METHOD N/A: handles the favicon, replace the favicon in the root to what you would like, default is the old gopher
-func Favicon(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "image/x-icon")
-	http.ServeFile(w, r, "../favicon.ico")
-}
-
-// METHOD ANY: not found page, returns 404.html in the public dir
-func NotFoundPage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "../public/404.html")
-}
-
 func AllUsers(ctx Context) error {
 	_, err := UserisAdmin(ctx)
 	if err != nil {
@@ -168,23 +157,56 @@ func EnqueueEmail(ctx Context) error {
 	if email.Address == "" {
 		return fmt.Errorf("must use an email address")
 	}
-	if err := AddEmailtoQueue(email); err != nil {
+	email.Name = ctx.Req.URL.Query().Get("name")
+	if email.Name == "" {
+		return fmt.Errorf("must use an email address")
+	}
+
+	if err := email.AddEmailtoQueue(); err != nil {
 		return err
 	}
-	ctx.Resp.Write([]byte("added email to queue"))
 	return nil
 }
 
 func DequeueEmail(ctx Context) error {
+	_, err := UserisAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
+	id := ctx.Req.URL.Query().Get("id")
+	if id == "" {
+		return fmt.Errorf("must include email id")
+	}
+	dbid, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	email := new(Email)
+	email.Id = dbid
+	if err := email.RemoveEmailFromQueue(); err != nil {
+		return err
+	}
 	return nil
 }
 
 func AllEmails(ctx Context) error {
+	_, err := UserisAdmin(ctx)
+	if err != nil {
+		return err
+	}
 	data, err := EmailsinQueue()
 	if err != nil {
 		return err
 	}
 
-	ctx.Resp.Write(data)
+	var emails []Email
+
+	if err := json.Unmarshal(data, &emails); err != nil {
+		return err
+	}
+
+	ctx.Resp.Write([]byte(string(data)))
 	return nil
 }
