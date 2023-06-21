@@ -12,7 +12,7 @@ func main() {
 	}
 
 	dbconf := wok.DbConfig{
-		Host:            "db",
+		Host:            "localhost",
 		Port:            5432,
 		User:            "postgres",
 		Password:        "docker",

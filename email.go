@@ -9,6 +9,7 @@ import (
 type Email struct {
 	Id      int    `json:"id"`
 	Address string `json:"address"`
+	Name    string `json:"name"`
 }
 
 func SendCreateUserEmail(email string) error {
@@ -40,7 +41,7 @@ func EmailsinQueue() ([]byte, error) {
 	var elist []Email
 	var e Email
 	for rows.Next() {
-		rows.Scan(&e.Id, &e.Address)
+		rows.Scan(&e.Id, &e.Address, &e.Name)
 		elist = append(elist, e)
 	}
 
@@ -53,7 +54,7 @@ func EmailsinQueue() ([]byte, error) {
 }
 
 func AddEmailtoQueue(e *Email) error {
-	_, err := Database.Exec("INSERT INTO signups (email) VALUES ($1)", e.Address)
+	_, err := Database.Exec("INSERT INTO signups (email, name) VALUES ($1, $2)", e.Address, e.Name)
 	if err != nil {
 		return err
 	}

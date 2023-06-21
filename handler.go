@@ -161,6 +161,7 @@ func SendEmailHandle(ctx Context) {
 	email := ctx.Req.URL.Query().Get("email")
 	if err := SendCreateUserEmail(email); err != nil {
 		ctx.Resp.Write([]byte(err.Error()))
+		return
 	}
 
 	ctx.Resp.Write([]byte("sent an email to" + email))
