@@ -1,7 +1,9 @@
 package wok
 
 import (
+	"bytes"
 	"encoding/json"
+	"html/template"
 	"net/smtp"
 	"os"
 )
@@ -12,13 +14,15 @@ type Email struct {
 	Name    string `json:"name"`
 }
 
-func SendCreateUserEmail(email string) error {
+func SendCreateUserEmail(email, tmpl string) error {
 	from := os.Getenv("EMAIL")
 	password := os.Getenv("PASSWORD")
-
-	body, err := os.ReadFile("../public/NewUser.html")
-
+	body, err := template.ParseFiles(tmpl)
 	if err != nil {
+		return err
+	}
+	buf := new(bytes.Buffer)
+	if err := body.Execute(buf, nil); err != nil {
 		return err
 	}
 
@@ -26,7 +30,7 @@ func SendCreateUserEmail(email string) error {
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
 
-	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{email}, []byte(subject+mime+string(body))); err != nil {
+	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{email}, []byte(subject+mime+buf.String())); err != nil {
 		return err
 	}
 

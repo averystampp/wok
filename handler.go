@@ -143,15 +143,23 @@ func DeleteUserHandle(ctx Context) error {
 }
 
 func SendEmailHandle(ctx Context) error {
-
+	_, err := UserisAdmin(ctx)
+	if err != nil {
+		return err
+	}
 	email := ctx.Req.URL.Query().Get("email")
-	if err := SendCreateUserEmail(email); err != nil {
+
+	if err := SendCreateUserEmail(email, "../public/NewUser.html"); err != nil {
 		return err
 	}
 	return nil
 }
 
 func EnqueueEmail(ctx Context) error {
+	_, err := UserisAdmin(ctx)
+	if err != nil {
+		return err
+	}
 	email := new(Email)
 	email.Address = ctx.Req.URL.Query().Get("address")
 	if email.Address == "" {
