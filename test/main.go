@@ -1,15 +1,13 @@
 package main
 
 import (
+	"log"
+
 	"github.com/averystampp/wok"
 )
 
 func main() {
-	config := &wok.WokConfig{
-		Addr:    ":8080",
-		Handler: nil,
-		TLS:     false,
-	}
+	app := wok.NewWok(false, ":8080", "", "")
 
 	dbconf := wok.DbConfig{
 		Host:            "localhost",
@@ -17,8 +15,9 @@ func main() {
 		User:            "postgres",
 		Password:        "docker",
 		Dbname:          "postgres",
-		MigrationFolder: "./test/migrations",
+		MigrationFolder: "./migrations",
 	}
 
-	wok.StartServer(config, dbconf)
+	log.Fatal(app.StartServer(dbconf))
+
 }
