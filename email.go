@@ -12,6 +12,7 @@ type Email struct {
 	Id      int    `json:"id"`
 	Address string `json:"address"`
 	Name    string `json:"name"`
+	Emailid string `json:"emailid"`
 }
 
 func SendCreateUserEmail(email, tmpl string) error {
@@ -42,10 +43,12 @@ func EmailsinQueue() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var elist []Email
 	var e Email
+
 	for rows.Next() {
-		rows.Scan(&e.Id, &e.Address, &e.Name)
+		rows.Scan(&e.Id, &e.Address, &e.Name, &e.Emailid)
 		elist = append(elist, e)
 	}
 
