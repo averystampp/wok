@@ -9,7 +9,7 @@ import (
 
 type WokConfig struct {
 	Addr     string
-	Handler  http.Handler
+	Handler  *http.ServeMux
 	TLS      bool
 	CertFile string
 	KeyFile  string
