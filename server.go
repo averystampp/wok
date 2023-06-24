@@ -7,19 +7,11 @@ import (
 	"reflect"
 )
 
-type WokConfig struct {
-	Addr     string
-	Handler  *http.ServeMux
-	TLS      bool
-	CertFile string
-	KeyFile  string
-}
-
 // takes in a server struct and runs the server on the speified struct with the specified handler
 // also takes a db config, validates it and then run dbstartup
 // TODO: remove error return and use panics instead beause each of these processes only run once on startup
 // maybe implement a sudo recovery to ensure server is more resiliant
-func StartServer(config *WokConfig, dbconfig DbConfig) error {
+func (config *Wok) StartServer(dbconfig DbConfig) error {
 
 	if err := validatedbconfig(dbconfig); err != nil {
 		panic(err)
@@ -45,17 +37,17 @@ func StartServer(config *WokConfig, dbconfig DbConfig) error {
 	}
 	fmt.Println("WOK version 0.0.0")
 	fmt.Println("-------------------------------------")
-	fmt.Printf("| Server starting on localhost%s |\n", config.Addr)
+	fmt.Printf("| Server starting on localhost%s |\n", config.address)
 	fmt.Println("-------------------------------------")
 
 	// call the default router
-	DefaultRouter()
-	if config.TLS {
-		if err := http.ListenAndServeTLS(config.Addr, config.CertFile, config.KeyFile, config.Handler); err != nil {
+	DefaultRouter(config)
+	if config.tls {
+		if err := http.ListenAndServeTLS(config.address, config.certFile, config.keyFile, config.Mux); err != nil {
 			return err
 		}
 	} else {
-		if err := http.ListenAndServe(config.Addr, config.Handler); err != nil {
+		if err := http.ListenAndServe(config.address, config.Mux); err != nil {
 			return err
 		}
 	}

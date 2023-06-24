@@ -1,7 +1,9 @@
 package wok
 
 import (
+	"bytes"
 	"encoding/json"
+	"html/template"
 	"net/smtp"
 	"os"
 )
@@ -9,15 +11,19 @@ import (
 type Email struct {
 	Id      int    `json:"id"`
 	Address string `json:"address"`
+	Name    string `json:"name"`
+	Emailid string `json:"emailid"`
 }
 
-func SendCreateUserEmail(email string) error {
+func SendCreateUserEmail(email, tmpl string) error {
 	from := os.Getenv("EMAIL")
 	password := os.Getenv("PASSWORD")
-
-	body, err := os.ReadFile("../public/NewUser.html")
-
+	body, err := template.ParseFiles(tmpl)
 	if err != nil {
+		return err
+	}
+	buf := new(bytes.Buffer)
+	if err := body.Execute(buf, nil); err != nil {
 		return err
 	}
 
@@ -25,7 +31,7 @@ func SendCreateUserEmail(email string) error {
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
 
-	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{email}, []byte(subject+mime+string(body))); err != nil {
+	if err := smtp.SendMail("smtp.gmail.com:587", auth, "noreply@wok.app", []string{email}, []byte(subject+mime+buf.String())); err != nil {
 		return err
 	}
 
@@ -37,10 +43,12 @@ func EmailsinQueue() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var elist []Email
 	var e Email
+
 	for rows.Next() {
-		rows.Scan(&e.Id, &e.Address)
+		rows.Scan(&e.Id, &e.Address, &e.Name, &e.Emailid)
 		elist = append(elist, e)
 	}
 
@@ -52,8 +60,8 @@ func EmailsinQueue() ([]byte, error) {
 
 }
 
-func AddEmailtoQueue(e *Email) error {
-	_, err := Database.Exec("INSERT INTO signups (email) VALUES ($1)", e.Address)
+func (e *Email) AddEmailtoQueue() error {
+	_, err := Database.Exec("INSERT INTO signups (email, name) VALUES ($1, $2)", e.Address, e.Name)
 	if err != nil {
 		return err
 	}
@@ -61,6 +69,10 @@ func AddEmailtoQueue(e *Email) error {
 	return nil
 }
 
-func RemoveEmailFromQueue(e *Email) error {
+func (e *Email) RemoveEmailFromQueue() error {
+	_, err := Database.Exec("DELETE FROM signups WHERE id=$1", e.Id)
+	if err != nil {
+		return err
+	}
 	return nil
 }

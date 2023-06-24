@@ -53,7 +53,9 @@ func DbStartup(c *DbConfig) (*sql.DB, error) {
 	_, err = db.Exec(
 		`CREATE TABLE IF NOT EXISTS signups (
 		id         serial PRIMARY KEY,
-		email      VARCHAR( 128 ) NOT NULL
+		email      VARCHAR( 128 ) NOT NULL,
+		name      VARCHAR( 128 ) NOT NULL
+		
 	);`)
 
 	if err != nil {
