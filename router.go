@@ -4,19 +4,15 @@ import "net/http"
 
 // includes all the default routes for user creation, login, logout, and return all users
 func DefaultRouter(wok *Wok) {
-	wok.Mux.Handle("/user", wok.Post(CreatUserHandle)) // create a user
-	wok.Mux.Handle("/login", wok.Post(LoginHandle))    // login to an account
-	wok.Mux.Handle("/all", wok.Get(AllUsers))          // show all users currently in the database
-	wok.Mux.Handle("/logout", wok.Get(LogoutUser))     // logout of an account
-	wok.Mux.Handle("/delete", wok.Delete(DeleteUserHandle))
-	wok.Mux.Handle("/email", wok.Get(SendEmailHandle))
-	wok.Mux.Handle("/addemail", wok.Post(EnqueueEmail))
-	wok.Mux.Handle("/getemails", wok.Get(AllEmails))
-	wok.Mux.Handle("/deleteemail", wok.Delete(DequeueEmail))
+	wok.Post("/user", CreatUserHandle)
+	wok.Post("/login", LoginHandle)
+	wok.Get("/all", AllUsers)
+	wok.Get("/logout", LogoutUser)
+	wok.Delete("/delete", DeleteUserHandle)
 }
 
-// Handler func is a way to declare a function that will hold a context
-// if you do not want this use http.HandleFunc()
+// Wok enforces its own handler to return an error, then wraps it into an
+// http handler converter
 type Handler func(Context) error
 
 // context is just a struct of the respose writer and request as used by http handlers
@@ -27,31 +23,31 @@ type Context struct {
 
 type Wok struct {
 	address  string
-	Mux      *http.ServeMux
+	mux      *http.ServeMux
 	tls      bool
 	certFile string
 	keyFile  string
 }
 
+// Return a new Wok server
 func NewWok(tls bool, addr, certfile, keyfile string) *Wok {
 	return &Wok{
 		address:  addr,
 		tls:      tls,
 		certFile: certfile,
 		keyFile:  keyfile,
-		Mux:      new(http.ServeMux),
+		mux:      new(http.ServeMux),
 	}
 }
 
-// enforces that the client use the POST method for the passed handler
-func (wok *Wok) Post(handle Handler) http.HandlerFunc {
+// Takes a wok handler and returns a traditional http.HandlerFunc
+func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := Context{
 			Resp: w,
 			Req:  r,
 		}
-
-		if ctx.Req.Method != "POST" {
+		if ctx.Req.Method != method {
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
 			return
 		}
@@ -60,109 +56,41 @@ func (wok *Wok) Post(handle Handler) http.HandlerFunc {
 			ctx.Resp.Write([]byte(err.Error()))
 			return
 		}
-
 	}
 }
 
-// enforces that the client use the GET method for the passed handler
-func (wok *Wok) Get(handle Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-		}
-
-		if ctx.Req.Method != "GET" {
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			return
-		}
-
-		if err := handle(ctx); err != nil {
-			ctx.Resp.Write([]byte(err.Error()))
-			return
-		}
-
-	}
+// Enforce the POST method for the passed handler
+func (wok *Wok) Post(route string, handle Handler) {
+	h := handlewokfunc("POST", handle)
+	wok.mux.Handle(route, h)
 }
 
-// enforce the patch method for the passed handler
-func (wok *Wok) Patch(handle Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-		}
-
-		if ctx.Req.Method != "PATCH" {
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			return
-		}
-
-		if err := handle(ctx); err != nil {
-			ctx.Resp.Write([]byte(err.Error()))
-			return
-		}
-
-	}
+// Enforce the GET method for the passed handler
+func (wok *Wok) Get(route string, handle Handler) {
+	h := handlewokfunc("GET", handle)
+	wok.mux.Handle(route, h)
 }
 
-// enforce put method for the passed handler
-func (wok *Wok) Put(handle Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-		}
-
-		if ctx.Req.Method != "PUT" {
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			return
-		}
-
-		if err := handle(ctx); err != nil {
-			ctx.Resp.Write([]byte(err.Error()))
-			return
-		}
-
-	}
+// Enforce the PATCH method for the passed handler
+func (wok *Wok) Patch(route string, handle Handler) {
+	h := handlewokfunc("PATCH", handle)
+	wok.mux.Handle(route, h)
 }
 
-func (wok *Wok) Options(handle Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-		}
-
-		if ctx.Req.Method != "OPTIONS" {
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			return
-		}
-
-		if err := handle(ctx); err != nil {
-			ctx.Resp.Write([]byte(err.Error()))
-			return
-		}
-
-	}
+// Enforce PUT method for the passed handler
+func (wok *Wok) Put(route string, handle Handler) {
+	h := handlewokfunc("PUT", handle)
+	wok.mux.Handle(route, h)
 }
 
-func (wok *Wok) Delete(handle Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-		}
+// Enforce the OPTIONS method for the passed handler
+func (wok *Wok) Options(route string, handle Handler) {
+	h := handlewokfunc("OPTIONS", handle)
+	wok.mux.Handle(route, h)
+}
 
-		if ctx.Req.Method != "DELETE" {
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			return
-		}
-
-		if err := handle(ctx); err != nil {
-			ctx.Resp.Write([]byte(err.Error()))
-			return
-		}
-
-	}
+// Enforce the DELETE method for the passed handler
+func (wok *Wok) Delete(route string, handle Handler) {
+	h := handlewokfunc("DELETE", handle)
+	wok.mux.Handle(route, h)
 }

@@ -3,6 +3,8 @@ package wok
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 // takes in context and parses the session_id cookie, if the cookie is not present
@@ -10,66 +12,51 @@ import (
 // but the user does not have the role of "user" or "admin", return an error stating they are not authorized
 // if the cookie is in the request and the users role is user or admin, returns the session_id as a string and nil
 // for the error
-func UserisUser(ctx Context) (string, error) {
+func UserisValid(ctx Context) error {
 	id, err := ctx.Req.Cookie("session_id")
 	if err != nil {
-		return "", fmt.Errorf("%s", http.StatusText(http.StatusUnauthorized))
+		return fmt.Errorf("%s", http.StatusText(http.StatusUnauthorized))
 	}
 
-	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := Database.QueryRow(qs, id.Value)
-	var role string
-	row.Scan(&role)
-
-	if role == "user" {
-		return id.Value, nil
+	uuid, err := uuid.Parse(id.Value)
+	if err != nil {
+		return err
 	}
 
-	if role == "admin" {
-		return id.Value, nil
+	qs := "SELECT session_id FROM users WHERE session_id=$1"
+	row := Database.QueryRow(qs, uuid.String())
+	var session string
+	if err := row.Scan(&session); err != nil {
+		return err
 	}
 
-	return "", fmt.Errorf("%s", http.StatusText(http.StatusUnauthorized))
+	return nil
 
 }
 
-// takes in context, returns string of users id to be used by handler if necessary
-// also returns an error, wrote http into logic because there is multiple errors from this function
-// this function mirrors the UserisUser function but only for admins
-func UserisAdmin(ctx Context) (string, error) {
-	id := ctx.Req.Header.Get("session_id")
-	if id == "" {
-		return "", fmt.Errorf("must include a session id")
-	}
-
-	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := Database.QueryRow(qs, id)
-	var role string
-	row.Scan(&role)
-
-	if role == "admin" {
-		return id, nil
-	}
-
-	return "", fmt.Errorf("user is not authorized")
-
-}
-
-func QueryUserfromDb(ctx Context) (string, error) {
+func UserisAdmin(ctx Context) error {
 	id, err := ctx.Req.Cookie("session_id")
 	if err != nil {
-		return "", fmt.Errorf("must send a session_id")
+		return err
+	}
+
+	uuid, err := uuid.Parse(id.Value)
+	if err != nil {
+		return err
 	}
 
 	qs := "SELECT role FROM users WHERE session_id=$1"
-	row := Database.QueryRow(qs, id.Value)
+	row := Database.QueryRow(qs, uuid.String())
 	var role string
-	row.Scan(&role)
 
-	if role != "" {
-		return role, nil
+	if err := row.Scan(&role); err != nil {
+		return err
 	}
 
-	return "", fmt.Errorf("error getting role from database")
+	if role != "admin" {
+		return fmt.Errorf(http.StatusText(http.StatusUnauthorized))
+	}
+
+	return nil
 
 }
