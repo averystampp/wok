@@ -31,11 +31,12 @@ func connectToDB(c *DbConfig) error {
 		return err
 	}
 	err = db.Ping()
+
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println("Connected to database")
+
 	_, err = db.Exec(
 		`CREATE TABLE IF NOT EXISTS users (
 	  		id         serial PRIMARY KEY,
@@ -50,18 +51,6 @@ func connectToDB(c *DbConfig) error {
 		return err
 	}
 
-	_, err = db.Exec(
-		`CREATE TABLE IF NOT EXISTS signups (
-		id         serial PRIMARY KEY,
-		email      VARCHAR( 128 ) NOT NULL,
-		name      VARCHAR( 128 ) NOT NULL
-		
-	);`)
-
-	if err != nil {
-		return err
-	}
-
 	dir, err := os.ReadDir(c.MigrationFolder)
 
 	if err != nil {
@@ -69,8 +58,8 @@ func connectToDB(c *DbConfig) error {
 	}
 
 	for _, migration := range dir {
-
-		if strings.Split(migration.Name(), ".")[1] != "sql" {
+		fileExt := strings.Split(migration.Name(), ".")[1]
+		if fileExt != "sql" && fileExt != "psql" {
 			return fmt.Errorf("file does not have .sql extension: %s", migration.Name())
 		}
 

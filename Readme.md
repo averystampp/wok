@@ -6,7 +6,7 @@ the need overengineer their projects. Wok doesn't have any fancy features or com
 I originally set out to make a multi featured http server. Wok originally was a way to package multiple 
 services for developers to configure out of the box. But, Wok feels right when its as simple as possible.
 
-Wok my passion project. As time goes on I will add and remove features as I need them. If you feel
+Wok is my passion project. As time goes on I will add and remove features as I need them. If you feel
 like something should be added or changed in Wok feel free to make a PR. But I cannot promise that every feature
 will be added.
 
@@ -21,9 +21,9 @@ import (
 )
 
 func main() {
-	app := wok.NewWok(false, ":8080", "", "")
+	app := wok.NewWok(":8080")
 
-	dbconf := wok.DbConfig{
+	dbconfig := wok.DbConfig{
 		Host:            "localhost",
 		Port:            5432,
 		User:            "postgres",
@@ -34,12 +34,12 @@ func main() {
 
 	app.Get("/", HelloFromWok)
 
-	app.StartWok(dbconf)
+	app.StartWok(dbconfig)
 
 }
 
 func HelloFromWok(ctx wok.Context) error {
-	ctx.Resp.Write([]byte("hello from wok on the get"))
+	ctx.Resp.Write([]byte("Hello from Wok!"))
 	return nil
 }
 

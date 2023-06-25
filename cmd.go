@@ -46,7 +46,7 @@ func newAdmin(conf *DbConfig) {
 }
 
 // drops the users table, nice function to have when testing and you want to start fresh
-func dropUsersTable(conf *DbConfig) {
+func dropTable(conf *DbConfig) {
 	db, err := directToDB(conf)
 	if err != nil {
 		fmt.Println(err)
