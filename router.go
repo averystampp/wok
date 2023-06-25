@@ -1,8 +1,11 @@
 package wok
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
-// includes all the default routes for user creation, login, logout, and return all users
+// Default routes. TODO: Create an override or disable method for developers
 func DefaultRouter(wok *Wok) {
 	wok.Post("/user", CreatUserHandle)
 	wok.Post("/login", LoginHandle)
@@ -15,32 +18,24 @@ func DefaultRouter(wok *Wok) {
 // http handler converter
 type Handler func(Context) error
 
-// context is just a struct of the respose writer and request as used by http handlers
+// Context controls ResponseWriter and pointer to Request, used to extend methods
 type Context struct {
 	Resp http.ResponseWriter
 	Req  *http.Request
 }
 
-type Wok struct {
-	address  string
-	mux      *http.ServeMux
-	tls      bool
-	certFile string
-	keyFile  string
-}
-
-// Return a new Wok server
-func NewWok(tls bool, addr, certfile, keyfile string) *Wok {
-	return &Wok{
-		address:  addr,
-		tls:      tls,
-		certFile: certfile,
-		keyFile:  keyfile,
-		mux:      new(http.ServeMux),
+// Syntactic sugar for passing in data and writing a response in JSON
+func (c *Context) JSON(data any) error {
+	body, err := json.Marshal(data)
+	if err != nil {
+		return err
 	}
+
+	c.Resp.Write(body)
+	return nil
 }
 
-// Takes a wok handler and returns a traditional http.HandlerFunc
+// Takes a Wok handler and returns a traditional http.HandlerFunc
 func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := Context{

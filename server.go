@@ -6,9 +6,28 @@ import (
 	"os"
 )
 
+type Wok struct {
+	address  string
+	mux      *http.ServeMux
+	tls      bool
+	certFile string
+	keyFile  string
+}
+
 const (
 	WOK_VERSION = "Wok v1.0.0"
 )
+
+// Return a new Wok server struct
+func NewWok(tls bool, addr, certfile, keyfile string) *Wok {
+	return &Wok{
+		address:  addr,
+		tls:      tls,
+		certFile: certfile,
+		keyFile:  keyfile,
+		mux:      new(http.ServeMux),
+	}
+}
 
 func (w *Wok) StartWok(db DbConfig) {
 	if err := validatedbconfig(db); err != nil {
@@ -32,9 +51,7 @@ func (w *Wok) StartWok(db DbConfig) {
 	}
 
 	fmt.Println(WOK_VERSION)
-	fmt.Println("-------------------------------------")
-	fmt.Printf("| Server starting on port %s |\n", w.address)
-	fmt.Println("-------------------------------------")
+	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.address)
 
 	// call the default router
 	DefaultRouter(w)

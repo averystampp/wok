@@ -15,7 +15,6 @@ func CreatUserHandle(ctx Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(user)
 	if err := CreateUser(user); err != nil {
 		return err
 	}
@@ -74,12 +73,10 @@ func AllUsers(ctx Context) error {
 		return err
 	}
 
-	resp, err := json.Marshal(users)
-	if err != nil {
+	if err := ctx.JSON(users); err != nil {
 		return err
 	}
 
-	ctx.Resp.Write(resp)
 	return nil
 }
 
