@@ -67,7 +67,6 @@ func AllUsers(ctx Context) error {
 	if err := UserisAdmin(ctx); err != nil {
 		return err
 	}
-
 	users, err := GetAllUsers()
 	if err != nil {
 		return err

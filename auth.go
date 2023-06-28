@@ -15,7 +15,7 @@ import (
 func UserisValid(ctx Context) error {
 	id, err := ctx.Req.Cookie("session_id")
 	if err != nil {
-		return fmt.Errorf("%s", http.StatusText(http.StatusUnauthorized))
+		return err
 	}
 
 	uuid, err := uuid.Parse(id.Value)

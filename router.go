@@ -1,7 +1,9 @@
 package wok
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -22,17 +24,29 @@ type Handler func(Context) error
 type Context struct {
 	Resp http.ResponseWriter
 	Req  *http.Request
+	Ctx  context.Context
 }
 
 // Syntactic sugar for passing in data and writing a response in JSON
-func (c *Context) JSON(data any) error {
+func (ctx *Context) JSON(data any) error {
+
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-
-	c.Resp.Write(body)
+	ctx.Resp.Header().Set("Content-Type", "application/json")
+	ctx.Resp.Write(body)
 	return nil
+}
+
+func (ctx *Context) SetKey(key any, val any) {
+	ctx.Ctx = context.WithValue(ctx.Ctx, key, val)
+}
+
+func (ctx *Context) GetKey(key any) string {
+	valuefromCtx := ctx.Ctx.Value(key)
+	value := fmt.Sprintf("%v", valuefromCtx)
+	return value
 }
 
 // Takes a Wok handler and returns a traditional http.HandlerFunc
@@ -41,6 +55,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 		ctx := Context{
 			Resp: w,
 			Req:  r,
+			Ctx:  context.Background(),
 		}
 		if ctx.Req.Method != method {
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
