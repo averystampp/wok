@@ -15,6 +15,7 @@ func CreatUserHandle(ctx Context) error {
 	if err != nil {
 		return err
 	}
+	defer ctx.Req.Body.Close()
 	if err := CreateUser(user); err != nil {
 		return err
 	}

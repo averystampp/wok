@@ -63,7 +63,7 @@ func connectToDB(c *DbConfig) error {
 			return fmt.Errorf("file does not have .sql extension: %s", migration.Name())
 		}
 
-		migrate, err := os.ReadFile(c.MigrationFolder + migration.Name())
+		migrate, err := os.ReadFile(c.MigrationFolder + "/" + migration.Name())
 		if err != nil {
 			return err
 		}
