@@ -39,10 +39,12 @@ func (ctx *Context) JSON(data any) error {
 	return nil
 }
 
+// Set key and value pairs for Ctx
 func (ctx *Context) SetKey(key any, val any) {
 	ctx.Ctx = context.WithValue(ctx.Ctx, key, val)
 }
 
+// Returns value of key as a string
 func (ctx *Context) GetKey(key any) string {
 	valuefromCtx := ctx.Ctx.Value(key)
 	value := fmt.Sprintf("%v", valuefromCtx)
