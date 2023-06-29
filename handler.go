@@ -44,19 +44,23 @@ func LoginHandle(ctx Context) error {
 	}
 
 	// session_id cookie is sent back to client to be saved and used in future requests to the server
-	cookie := new(http.Cookie)
-	cookie.Name = "session_id"
-	cookie.Value = uuid
-	cookie.HttpOnly = true
-	cookie.Expires = time.Now().Add(30 * time.Minute).Local()
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    uuid,
+		HttpOnly: true,
+		Expires:  time.Now().Add(30 * time.Minute).Local(),
+	}
+
 	http.SetCookie(ctx.Resp, cookie)
 
 	// logged_in cookie is sent back to client to be used to handle frontend views pages for changing state
-	c := new(http.Cookie)
-	c.Name = "logged_in"
-	c.Value = "true"
-	c.HttpOnly = true
-	c.Expires = time.Now().Add(30 * time.Minute).Local()
+	c := &http.Cookie{
+		Name:     "logged_in",
+		Value:    "true",
+		HttpOnly: true,
+		Expires:  time.Now().Add(30 * time.Minute).Local(),
+	}
+
 	http.SetCookie(ctx.Resp, c)
 
 	http.Redirect(ctx.Resp, ctx.Req, "/", http.StatusSeeOther)
