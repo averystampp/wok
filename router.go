@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 )
 
 // Default routes. TODO: Create an override or disable method for developers
@@ -105,4 +106,14 @@ func (wok *Wok) Options(route string, handle Handler) {
 func (wok *Wok) Delete(route string, handle Handler) {
 	h := handlewokfunc("DELETE", handle)
 	wok.mux.Handle(route, h)
+}
+
+func (wok *Wok) ServeDir(route string, path string) error {
+	ab, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	fs := http.FileServer(http.Dir(ab))
+	wok.mux.Handle(route+"/", http.StripPrefix(route, fs))
+	return nil
 }
