@@ -46,7 +46,15 @@ func connectToDB(c *DbConfig) error {
 	  		session_id      VARCHAR( 128 ) NOT NULL,
 			logged_in BOOLEAN NOT NULL
 			);`)
+	if err != nil {
+		return err
+	}
 
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS csrf (
+			id serial PRIMARY KEY,
+			token VARCHAR( 256 ) NOT NULL,
+			expires VARCHAR( 256 ) NOT NULL
+	);`)
 	if err != nil {
 		return err
 	}
