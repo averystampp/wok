@@ -110,7 +110,7 @@ func CsrfCreate(ctx Context) error {
 		if err := createCsrfToken(ctx); err != nil {
 			return err
 		}
-		http.Redirect(ctx.Resp, ctx.Req, ctx.Req.URL.Path, http.StatusSeeOther)
+
 		return err
 	}
 
@@ -125,6 +125,9 @@ func CsrfCreate(ctx Context) error {
 	}{}
 
 	if err := row.Scan(&tokenRow.id, &tokenRow.token, &tokenRow.expires); err != nil {
+		if err := createCsrfToken(ctx); err != nil {
+			return err
+		}
 		return err
 	}
 	// creates token if the row return nothing for the token value
@@ -166,6 +169,6 @@ func createCsrfToken(ctx Context) error {
 	}
 
 	http.SetCookie(ctx.Resp, cookie)
-
+	http.Redirect(ctx.Resp, ctx.Req, ctx.Req.URL.Path, http.StatusSeeOther)
 	return nil
 }
