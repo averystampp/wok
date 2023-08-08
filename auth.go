@@ -1,8 +1,13 @@
 package wok
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -59,4 +64,45 @@ func UserisAdmin(ctx Context) error {
 
 	return nil
 
+}
+
+func csrfProtecter(ctx Context) error {
+	csrfFromForm := ctx.Req.FormValue("_csrf")
+	row := Database.QueryRow("SELECT * FROM csrf WHERE token=$1", csrfFromForm)
+	var id int
+	var token string
+	var expiry string
+	row.Scan(&id, &token, &expiry)
+
+	if !hmac.Equal([]byte(token), []byte(csrfFromForm)) {
+		return fmt.Errorf("crsf token is not valid")
+	}
+
+	return nil
+}
+
+// Insert this into your handlers (GET methods) to create a CSRF token for the client if they don't have one
+// or if the one they have is expired, works in tandem with CsrfProtect for POST handlers
+
+func createCsrfToken(ctx Context) (*http.Cookie, error) {
+	secret := "disasecrect"
+	source := rand.NewSource(time.Now().UnixNano())
+
+	seed := strconv.Itoa(int(source.Int63()))
+	salt := []byte(seed + secret)
+	buf := sha256.New().Sum(salt)
+
+	hash := fmt.Sprintf("%x", buf)
+	exp := time.Now().UTC().Add(time.Minute * 30)
+	_, err := Database.Exec("INSERT into csrf (token,expires) VALUES ($1,$2)", hash, exp)
+	if err != nil {
+		return nil, err
+	}
+	cookie := &http.Cookie{
+		Name:     "_csrf",
+		Value:    hash,
+		Expires:  exp,
+		HttpOnly: true,
+	}
+	return cookie, nil
 }

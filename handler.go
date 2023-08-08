@@ -32,6 +32,7 @@ func CreatUserHandle(ctx Context) error {
 func LoginHandle(ctx Context) error {
 	// check if username is supplied
 	if ctx.Req.FormValue("username") == "" {
+		ctx.Resp.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("must include username")
 	}
 	// check if password is supplied
@@ -101,17 +102,20 @@ func LogoutUser(ctx Context) error {
 		return err
 	}
 
-	cookie := new(http.Cookie)
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Expires:  time.Now().Add(-1 * time.Second).Local(),
+		HttpOnly: true,
+	}
 
-	cookie.Name = "session_id"
-	cookie.Expires = time.Now().Add(-1 * time.Second).Local()
 	http.SetCookie(ctx.Resp, cookie)
 
-	c := new(http.Cookie)
-	c.Name = "logged_in"
-	c.Value = "false"
-	c.HttpOnly = true
-	c.Expires = time.Now().Add(30 * time.Minute).Local()
+	c := &http.Cookie{
+		Name:     "logged_in",
+		Value:    "false",
+		HttpOnly: true,
+		Expires:  time.Now().Add(30 * time.Minute).Local(),
+	}
 	http.SetCookie(ctx.Resp, c)
 
 	http.Redirect(ctx.Resp, ctx.Req, "/", http.StatusSeeOther)

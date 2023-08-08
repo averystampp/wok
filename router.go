@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 )
 
 // Default routes. TODO: Create an override or disable method for developers
 func DefaultRouter(wok *Wok) {
+	wok.prefix = ""
+	wok.Get("/tester", CSRFCreate(IndexRouter))
 	wok.Post("/user", CreatUserHandle)
-	wok.Post("/login", LoginHandle)
+	wok.Post("/login", CSRFProtect(LoginHandle))
 	wok.Get("/all", AllUsers)
 	wok.Get("/logout", LogoutUser)
 	wok.Delete("/delete", DeleteUserHandle)
@@ -27,9 +30,12 @@ type Context struct {
 	Ctx  context.Context
 }
 
+func IndexRouter(ctx Context) error {
+	return nil
+}
+
 // Syntactic sugar for passing in data and writing a response in JSON
 func (ctx *Context) JSON(data any) error {
-
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -60,6 +66,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 			Ctx:  context.TODO(),
 		}
 		if ctx.Req.Method != method {
+			ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
 			return
 		}
@@ -71,6 +78,10 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 	}
 }
 
+func (wok *Wok) Prefix(fix string) {
+	wok.prefix = fix
+}
+
 // Enforce the POST method for the passed handler
 func (wok *Wok) Post(route string, handle Handler) {
 	h := handlewokfunc("POST", handle)
@@ -80,29 +91,39 @@ func (wok *Wok) Post(route string, handle Handler) {
 // Enforce the GET method for the passed handler
 func (wok *Wok) Get(route string, handle Handler) {
 	h := handlewokfunc("GET", handle)
-	wok.mux.Handle(route, h)
+	wok.mux.Handle(wok.prefix+route, h)
 }
 
 // Enforce the PATCH method for the passed handler
 func (wok *Wok) Patch(route string, handle Handler) {
 	h := handlewokfunc("PATCH", handle)
-	wok.mux.Handle(route, h)
+	wok.mux.Handle(wok.prefix+route, h)
 }
 
 // Enforce PUT method for the passed handler
 func (wok *Wok) Put(route string, handle Handler) {
 	h := handlewokfunc("PUT", handle)
-	wok.mux.Handle(route, h)
+	wok.mux.Handle(wok.prefix+route, h)
 }
 
 // Enforce the OPTIONS method for the passed handler
 func (wok *Wok) Options(route string, handle Handler) {
 	h := handlewokfunc("OPTIONS", handle)
-	wok.mux.Handle(route, h)
+	wok.mux.Handle(wok.prefix+route, h)
 }
 
 // Enforce the DELETE method for the passed handler
 func (wok *Wok) Delete(route string, handle Handler) {
 	h := handlewokfunc("DELETE", handle)
-	wok.mux.Handle(route, h)
+	wok.mux.Handle(wok.prefix+route, h)
+}
+
+func (wok *Wok) ServeDir(route string, path string) error {
+	ab, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	fs := http.FileServer(http.Dir(ab))
+	wok.mux.Handle(route+"/", http.StripPrefix(route, fs))
+	return nil
 }

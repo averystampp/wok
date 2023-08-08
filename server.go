@@ -9,6 +9,7 @@ import (
 
 type Wok struct {
 	address  string
+	prefix   string
 	mux      *http.ServeMux
 	certFile string
 	keyFile  string
@@ -22,7 +23,7 @@ const (
 func NewWok(addr string) *Wok {
 	return &Wok{
 		address: addr,
-		mux:     new(http.ServeMux),
+		mux:     &http.ServeMux{},
 	}
 }
 
@@ -31,7 +32,7 @@ func NewWokTLS(addr, certfile, keyfile string) *Wok {
 		address:  addr,
 		certFile: certfile,
 		keyFile:  keyfile,
-		mux:      new(http.ServeMux),
+		mux:      &http.ServeMux{},
 	}
 }
 
@@ -60,7 +61,6 @@ func (w *Wok) StartWok(db DbConfig) {
 	fmt.Println(WOK_VERSION)
 	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.address)
 
-	// call the default router
 	DefaultRouter(w)
 
 	if w.certFile != "" && w.keyFile != "" {
