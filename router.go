@@ -11,7 +11,6 @@ import (
 // Default routes. TODO: Create an override or disable method for developers
 func DefaultRouter(wok *Wok) {
 	wok.prefix = ""
-	wok.Get("/tester", CSRFCreate(IndexRouter))
 	wok.Post("/user", CreatUserHandle)
 	wok.Post("/login", CSRFProtect(LoginHandle))
 	wok.Get("/all", AllUsers)
@@ -28,10 +27,6 @@ type Context struct {
 	Resp http.ResponseWriter
 	Req  *http.Request
 	Ctx  context.Context
-}
-
-func IndexRouter(ctx Context) error {
-	return nil
 }
 
 // Syntactic sugar for passing in data and writing a response in JSON

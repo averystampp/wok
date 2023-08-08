@@ -6,20 +6,13 @@ import (
 
 func CSRFProtect(h Handler) Handler {
 	return func(ctx Context) error {
-		l := Log{}
-		l.NewLogFile("log")
-
 		if err := csrfProtecter(ctx); err != nil {
-			l.Warn(ctx, err.Error())
 			return err
 		}
 
 		if err := h(ctx); err != nil {
-			l.Warn(ctx, err.Error())
 			return err
 		}
-
-		l.Info(ctx, "")
 		return nil
 	}
 }
