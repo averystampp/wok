@@ -10,13 +10,16 @@ import (
 
 // POST: create a user and insert them into the database
 func CreatUserHandle(ctx Context) error {
-	user := new(User)
+	if err := UserisAdmin(ctx); err != nil {
+		return err
+	}
+	user := User{}
 	err := json.NewDecoder(ctx.Req.Body).Decode(&user)
 	if err != nil {
 		return err
 	}
 	defer ctx.Req.Body.Close()
-	if err := CreateUser(user); err != nil {
+	if err := CreateUser(&user); err != nil {
 		return err
 	}
 

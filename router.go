@@ -57,7 +57,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 		ctx := Context{
 			Resp: w,
 			Req:  r,
-			Ctx:  context.Background(),
+			Ctx:  context.TODO(),
 		}
 		if ctx.Req.Method != method {
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))

@@ -2,6 +2,7 @@ package wok
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
@@ -63,9 +64,9 @@ func (w *Wok) StartWok(db DbConfig) {
 	DefaultRouter(w)
 
 	if w.certFile != "" && w.keyFile != "" {
-		http.ListenAndServeTLS(w.address, w.certFile, w.keyFile, w.mux)
+		log.Fatal(http.ListenAndServeTLS(w.address, w.certFile, w.keyFile, w.mux))
 	} else {
-		http.ListenAndServe(w.address, w.mux)
+		log.Fatal(http.ListenAndServe(w.address, w.mux))
 	}
 
 }
