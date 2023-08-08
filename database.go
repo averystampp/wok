@@ -52,7 +52,7 @@ func connectToDB(c *DbConfig) error {
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS csrf (
 			id serial PRIMARY KEY,
-			token VARCHAR( 256 ) NOT NULL,
+			token VARCHAR( 1004 ) NOT NULL,
 			expires VARCHAR( 256 ) NOT NULL
 	);`)
 	if err != nil {
@@ -66,6 +66,9 @@ func connectToDB(c *DbConfig) error {
 	}
 
 	for _, migration := range dir {
+		if len(dir) < 1 {
+			break
+		}
 		fileExt := strings.Split(migration.Name(), ".")[1]
 		if fileExt != "sql" && fileExt != "psql" {
 			return fmt.Errorf("file does not have .sql extension: %s", migration.Name())

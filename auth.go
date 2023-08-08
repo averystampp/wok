@@ -1,9 +1,12 @@
 package wok
 
 import (
-	"errors"
+	"crypto/hmac"
+	"crypto/sha256"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,40 +66,16 @@ func UserisAdmin(ctx Context) error {
 
 }
 
-func CsrfProtect(ctx Context) error {
-	token := ctx.Req.FormValue("_csrf")
+func csrfProtecter(ctx Context) error {
+	csrfFromForm := ctx.Req.FormValue("_csrf")
+	row := Database.QueryRow("SELECT * FROM csrf WHERE token=$1", csrfFromForm)
+	var id int
+	var token string
+	var expiry string
+	row.Scan(&id, &token, &expiry)
 
-	if token == "" {
-		return errors.New("no csrf token in request")
-	}
-
-	uuid, err := uuid.Parse(token)
-
-	if err != nil {
-		return errors.New("token is not in valid format")
-	}
-
-	qs := "SELECT * FROM csrf WHERE token=$1"
-
-	row := Database.QueryRow(qs, uuid.String())
-
-	tokenRow := struct {
-		id      int
-		token   string
-		expires string
-	}{}
-
-	if err := row.Scan(&tokenRow.id, &tokenRow.token, &tokenRow.expires); err != nil {
-		return err
-	}
-
-	t, err := time.Parse(time.RFC3339, tokenRow.expires)
-	if err != nil {
-		return err
-	}
-
-	if !time.Now().Local().Before(t) {
-		return errors.New("token is expired")
+	if !hmac.Equal([]byte(token), []byte(csrfFromForm)) {
+		return fmt.Errorf("crsf token is not valid")
 	}
 
 	return nil
@@ -104,71 +83,26 @@ func CsrfProtect(ctx Context) error {
 
 // Insert this into your handlers (GET methods) to create a CSRF token for the client if they don't have one
 // or if the one they have is expired, works in tandem with CsrfProtect for POST handlers
-func CsrfCreate(ctx Context) error {
-	csrf, err := ctx.Req.Cookie("_csrf")
+
+func createCsrfToken(ctx Context) (*http.Cookie, error) {
+	secret := "disasecrect"
+	source := rand.NewSource(time.Now().UnixNano())
+
+	seed := strconv.Itoa(int(source.Int63()))
+	salt := []byte(seed + secret)
+	buf := sha256.New().Sum(salt)
+
+	hash := fmt.Sprintf("%x", buf)
+	exp := time.Now().UTC().Add(time.Minute * 30)
+	_, err := Database.Exec("INSERT into csrf (token,expires) VALUES ($1,$2)", hash, exp)
 	if err != nil {
-		if err := createCsrfToken(ctx); err != nil {
-			return err
-		}
-
-		return err
-	}
-
-	qs := "SELECT * FROM csrf WHERE token=$1"
-
-	row := Database.QueryRow(qs, csrf.Value)
-
-	tokenRow := struct {
-		id      int
-		token   string
-		expires string
-	}{}
-
-	if err := row.Scan(&tokenRow.id, &tokenRow.token, &tokenRow.expires); err != nil {
-		if err := createCsrfToken(ctx); err != nil {
-			return err
-		}
-		return err
-	}
-	// creates token if the row return nothing for the token value
-	if tokenRow.token == "" {
-		if err := createCsrfToken(ctx); err != nil {
-			return err
-		}
-	}
-
-	t, err := time.Parse(time.RFC3339, tokenRow.expires)
-	if err != nil {
-		return err
-	}
-	// creates token if the current token given is expired
-	if !time.Now().Local().Before(t) {
-		if err := createCsrfToken(ctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func createCsrfToken(ctx Context) error {
-	qs := "INSERT INTO csrf (token, expires) VALUES ($1, $2)"
-
-	token := uuid.New()
-	expires := time.Now().Add(time.Minute * 15).Local()
-
-	_, err := Database.Exec(qs, token.String(), expires.Format(time.RFC3339))
-	if err != nil {
-		return err
+		return nil, err
 	}
 	cookie := &http.Cookie{
-		HttpOnly: true,
-		Expires:  expires,
-		Value:    token.String(),
 		Name:     "_csrf",
+		Value:    hash,
+		Expires:  exp,
+		HttpOnly: true,
 	}
-
-	http.SetCookie(ctx.Resp, cookie)
-	http.Redirect(ctx.Resp, ctx.Req, ctx.Req.URL.Path, http.StatusSeeOther)
-	return nil
+	return cookie, nil
 }

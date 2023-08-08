@@ -11,8 +11,9 @@ import (
 // Default routes. TODO: Create an override or disable method for developers
 func DefaultRouter(wok *Wok) {
 	wok.prefix = ""
+	wok.Get("/tester", CSRFCreate(IndexRouter))
 	wok.Post("/user", CreatUserHandle)
-	wok.Post("/login", LoginHandle)
+	wok.Post("/login", CSRFProtect(LoginHandle))
 	wok.Get("/all", AllUsers)
 	wok.Get("/logout", LogoutUser)
 	wok.Delete("/delete", DeleteUserHandle)
@@ -29,9 +30,12 @@ type Context struct {
 	Ctx  context.Context
 }
 
+func IndexRouter(ctx Context) error {
+	return nil
+}
+
 // Syntactic sugar for passing in data and writing a response in JSON
 func (ctx *Context) JSON(data any) error {
-
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -62,6 +66,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 			Ctx:  context.TODO(),
 		}
 		if ctx.Req.Method != method {
+			ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
 			return
 		}

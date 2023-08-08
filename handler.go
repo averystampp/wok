@@ -27,12 +27,9 @@ func CreatUserHandle(ctx Context) error {
 // POST: Takes in username and password from form, checks if they are blank, returns error if either are blank.
 // Calls Login function which will
 func LoginHandle(ctx Context) error {
-	if err := CsrfProtect(ctx); err != nil {
-		return err
-	}
-
 	// check if username is supplied
 	if ctx.Req.FormValue("username") == "" {
+		ctx.Resp.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("must include username")
 	}
 	// check if password is supplied
