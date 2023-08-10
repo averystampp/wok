@@ -151,11 +151,12 @@ func (ctx *Context) ValidateToken(secret string) error {
 	hash.Write([]byte(vals[0]))
 	sum := hash.Sum(nil)
 	asString := fmt.Sprintf("%x", sum)
+	fmt.Println(asString)
+	fmt.Println(vals[1])
 	if !hmac.Equal([]byte(asString), []byte(vals[1])) {
 		fmt.Println(asString)
 		fmt.Println(vals[1])
-		dataerror := map[string]string{"error": "token does not match"}
-		return ctx.JSON(dataerror)
+		return fmt.Errorf("tokens do not match")
 	}
 	return nil
 }
