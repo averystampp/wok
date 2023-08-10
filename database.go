@@ -13,6 +13,7 @@ import (
 type DbConfig struct {
 	Host            string
 	Port            int
+	SSL             bool
 	User            string
 	Password        string
 	Dbname          string
@@ -24,29 +25,26 @@ var Database *sql.DB
 // connects to database on server startup, will create the users table if it not already in the database
 func connectToDB(c *DbConfig) error {
 
-	psqlInfo := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", c.User, c.Password, c.Host, c.Port, c.Dbname)
+	sslString := "disable"
+	if c.SSL {
+		sslString = "enable"
+	}
+
+	psqlInfo := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s",
+		c.User,
+		c.Password,
+		c.Host,
+		c.Port,
+		c.Dbname,
+		sslString,
+	)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		return err
 	}
-	err = db.Ping()
 
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	_, err = db.Exec(
-		`CREATE TABLE IF NOT EXISTS users (
-	  		id         serial PRIMARY KEY,
-	  		email      VARCHAR( 128 ) NOT NULL,
-	  		password     VARCHAR( 255 ) NOT NULL,
-	  		role      VARCHAR( 128 ) NOT NULL,
-	  		session_id      VARCHAR( 128 ) NOT NULL,
-			logged_in BOOLEAN NOT NULL
-			);`)
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		return err
 	}
 
@@ -55,6 +53,7 @@ func connectToDB(c *DbConfig) error {
 			token VARCHAR( 1004 ) NOT NULL,
 			expires VARCHAR( 256 ) NOT NULL
 	);`)
+
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,6 @@ func connectToDB(c *DbConfig) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	Database = db

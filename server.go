@@ -8,11 +8,14 @@ import (
 )
 
 type Wok struct {
-	address  string
+	Host     string
+	Address  string
 	prefix   string
 	mux      *http.ServeMux
-	certFile string
-	keyFile  string
+	CertFile string
+	KeyFile  string
+	Database bool
+	Session
 }
 
 const (
@@ -20,53 +23,53 @@ const (
 )
 
 // Return a new Wok server struct
-func NewWok(addr string) *Wok {
-	return &Wok{
-		address: addr,
-		mux:     &http.ServeMux{},
+func NewWok(w Wok) *Wok {
+	if w.Host == "" {
+		w.Host = "http://localhost"
 	}
-}
-
-func NewWokTLS(addr, certfile, keyfile string) *Wok {
 	return &Wok{
-		address:  addr,
-		certFile: certfile,
-		keyFile:  keyfile,
+		Address:  w.Address,
+		Host:     w.Host,
 		mux:      &http.ServeMux{},
+		CertFile: w.CertFile,
+		KeyFile:  w.KeyFile,
+		Database: w.Database,
 	}
 }
 
 func (w *Wok) StartWok(db DbConfig) {
-	if err := validatedbconfig(db); err != nil {
-		panic(err)
-	}
-
-	for _, arg := range os.Args {
-		if arg == "createuser" {
-			newAdmin(&db)
-			os.Exit(0)
+	if w.Database {
+		if err := validatedbconfig(db); err != nil {
+			panic(err)
 		}
 
-		if arg == "droptable" {
-			dropTable(&db)
-			os.Exit(0)
+		for _, arg := range os.Args {
+			if arg == "droptable" {
+				dropTable(&db)
+				os.Exit(0)
+			}
 		}
+
+		if err := connectToDB(&db); err != nil {
+			panic(err)
+		}
+
+		defer Database.Close()
+		startServer(w)
 	}
 
-	if err := connectToDB(&db); err != nil {
-		panic(err)
-	}
-	defer Database.Close()
+	startServer(w)
 
+}
+
+var WokSession = StartSession()
+
+func startServer(w *Wok) {
 	fmt.Println(WOK_VERSION)
-	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.address)
-
-	DefaultRouter(w)
-
-	if w.certFile != "" && w.keyFile != "" {
-		log.Fatal(http.ListenAndServeTLS(w.address, w.certFile, w.keyFile, w.mux))
+	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.Address)
+	if w.CertFile != "" && w.KeyFile != "" {
+		log.Fatal(http.ListenAndServeTLS(w.Address, w.CertFile, w.KeyFile, w.mux))
 	} else {
-		log.Fatal(http.ListenAndServe(w.address, w.mux))
+		log.Fatal(http.ListenAndServe(w.Address, w.mux))
 	}
-
 }

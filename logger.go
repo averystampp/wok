@@ -13,18 +13,11 @@ const (
 )
 
 type Log struct {
-	WokLogger
 	file *os.File
 }
 
-type WokLogger interface {
-	Info(Context, string)
-	Warn(Context, string)
-	Error(Context, string)
-}
-
-func (l *Log) NewLogFile(filename string) error {
-	f, err := os.OpenFile(filename+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func (l *Log) NewLogFile() error {
+	f, err := os.OpenFile("wok.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
@@ -33,8 +26,8 @@ func (l *Log) NewLogFile(filename string) error {
 	return nil
 }
 
-func (l *Log) Info(ctx Context, d string) {
-	e := fmt.Sprintf(WokInfo+" MSG: %s %s", ctx.Req.URL, d)
+func (l *Log) Info(ctx Context) {
+	e := fmt.Sprintf(WokInfo+" %s", ctx.Req.URL)
 	log.SetOutput(l.file)
 	log.Println(e)
 	defer l.file.Close()
