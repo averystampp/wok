@@ -2,6 +2,7 @@ package wok
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 )
@@ -17,7 +18,9 @@ func dropTable(conf *DbConfig) {
 	for {
 		fmt.Print("Type Table Name to drop: ")
 		scanner.Scan()
+
 		table := scanner.Text()
+
 		if len(table) == 0 {
 			break
 		}
@@ -28,5 +31,23 @@ func dropTable(conf *DbConfig) {
 			break
 		}
 	}
+
+}
+
+func convertLogToJSON() {
+	b, err := os.ReadFile("log.log")
+	if err != nil {
+		fmt.Println(err)
+	}
+	b = bytes.ReplaceAll(b, []byte("}"), []byte("},"))
+	b = bytes.Replace(b, []byte("{"), []byte("[{"), 1)
+	b[len(b)-2] = ']'
+
+	out, err := os.Create("output.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	out.Write(b)
 
 }

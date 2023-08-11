@@ -88,6 +88,7 @@ func (ctx *Context) MakeRequest(method, url string, data io.Reader) (*http.Respo
 
 // Reads the request body and returns the data as an array of bytes or an error
 func (ctx *Context) ReadBody() ([]byte, error) {
+	defer ctx.Req.Body.Close()
 	return io.ReadAll(ctx.Req.Body)
 }
 

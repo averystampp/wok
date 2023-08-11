@@ -22,11 +22,10 @@ type Log struct {
 }
 
 func NewLogger() (*Log, error) {
-	file, err := os.Create("./log/log.txt")
+	file, err := os.OpenFile("log.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
 	}
-
 	return &Log{
 		sl: slog.New(slog.NewJSONHandler(file, nil)),
 	}, nil
@@ -50,12 +49,4 @@ func (l *Log) Error(ctx Context, d string) {
 	log.SetOutput(l.file)
 	log.Println(e)
 	defer l.file.Close()
-}
-
-func (l *Log) ReadLogFile() {
-	b, err := os.ReadFile("./log/log.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(b)
 }

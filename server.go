@@ -54,6 +54,11 @@ func (w *Wok) StartWok(db DbConfig) {
 				dropTable(&db)
 				os.Exit(0)
 			}
+
+			if arg == "logJSON" {
+				convertLogToJSON()
+				os.Exit(0)
+			}
 		}
 
 		if err := connectToDB(&db); err != nil {
