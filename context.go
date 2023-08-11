@@ -35,8 +35,8 @@ func (ctx *Context) JSON(data interface{}) error {
 		return err
 	}
 	ctx.Resp.Header().Set("Content-Type", "application/json")
-	ctx.Resp.Write(body)
-	return nil
+
+	return fmt.Errorf(string(body))
 }
 
 // Set key and value pairs for Ctx
@@ -151,12 +151,33 @@ func (ctx *Context) ValidateToken(secret string) error {
 	hash.Write([]byte(vals[0]))
 	sum := hash.Sum(nil)
 	asString := fmt.Sprintf("%x", sum)
-	fmt.Println(asString)
-	fmt.Println(vals[1])
+
 	if !hmac.Equal([]byte(asString), []byte(vals[1])) {
-		fmt.Println(asString)
-		fmt.Println(vals[1])
 		return fmt.Errorf("tokens do not match")
 	}
+
 	return nil
+}
+
+func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadCloser) (*http.Response, error) {
+	client := http.Client{}
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	apikey, err := ctx.Req.Cookie("apikey")
+	if err != nil {
+		return nil, err
+	}
+	req.AddCookie(apikey)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+
 }

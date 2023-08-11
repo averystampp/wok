@@ -15,12 +15,13 @@ type Wok struct {
 	CertFile string
 	KeyFile  string
 	Database bool
-	Session
 }
 
 const (
 	WOK_VERSION = "Wok v1.0.0"
 )
+
+var WokLog = &Log{}
 
 // Return a new Wok server struct
 func NewWok(w Wok) *Wok {
@@ -38,6 +39,11 @@ func NewWok(w Wok) *Wok {
 }
 
 func (w *Wok) StartWok(db DbConfig) {
+	l, err := NewLogger()
+	if err != nil {
+		panic(err)
+	}
+	WokLog = l
 	if w.Database {
 		if err := validatedbconfig(db); err != nil {
 			panic(err)

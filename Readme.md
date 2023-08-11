@@ -21,7 +21,13 @@ import (
 )
 
 func main() {
-	app := wok.NewWok(":8080")
+	config := wok.Wok{
+		Address:  ":8080",
+		Database: false,
+	}
+
+	app := wok.NewWok(config)
+	
 
 	dbconfig := wok.DbConfig{
 		Host:            "localhost",

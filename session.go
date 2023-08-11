@@ -1,14 +1,14 @@
 package wok
 
 import (
-	"fmt"
 	"runtime"
+	"sync"
 )
 
 type Session struct {
-	Name   string
-	Items  map[string]interface{}
-	Secret string
+	Name  string
+	Items map[string]interface{}
+	mu    sync.Mutex
 }
 
 func StartSession() *Session {
@@ -19,25 +19,30 @@ func StartSession() *Session {
 
 // If key already exists it will overwrite the value
 func (s *Session) AddItem(key string, val interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.Items[key] = val
 }
 
-func (s *Session) RetrieveItem(key string) {
+func (s *Session) RetrieveItem(key string) interface{} {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	val, ok := s.Items[key]
 	if ok {
-		fmt.Println(val.(string))
+		return val
 	}
+	return nil
 }
 
 func (s *Session) DeleteItem(key string) {
-	_, ok := s.Items[key]
-	if ok {
-		delete(s.Items, key)
-	}
-
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.Items, key)
 }
 
 func (s *Session) NewSession() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.Items = nil
 	runtime.GC()
 }

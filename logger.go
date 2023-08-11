@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
+
+	"golang.org/x/exp/slog"
 )
 
 const (
@@ -14,23 +17,25 @@ const (
 
 type Log struct {
 	file *os.File
+	sl   *slog.Logger
+	mu   sync.Mutex
 }
 
-func (l *Log) NewLogFile() error {
-	f, err := os.OpenFile("wok.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func NewLogger() (*Log, error) {
+	file, err := os.Create("./log/log.txt")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	l.file = f
-	return nil
+	return &Log{
+		sl: slog.New(slog.NewJSONHandler(file, nil)),
+	}, nil
 }
 
 func (l *Log) Info(ctx Context) {
-	e := fmt.Sprintf(WokInfo+" %s", ctx.Req.URL)
-	log.SetOutput(l.file)
-	log.Println(e)
-	defer l.file.Close()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.sl.Info("RESOLVE", "route", ctx.Req.URL.Path, "method", ctx.Req.Method)
 }
 
 func (l *Log) Warn(ctx Context, d string) {
@@ -45,4 +50,12 @@ func (l *Log) Error(ctx Context, d string) {
 	log.SetOutput(l.file)
 	log.Println(e)
 	defer l.file.Close()
+}
+
+func (l *Log) ReadLogFile() {
+	b, err := os.ReadFile("./log/log.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(b)
 }
