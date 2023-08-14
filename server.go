@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 )
 
 type Wok struct {
@@ -23,11 +24,10 @@ const (
 
 var WokLog = &Log{}
 
+var pool *sync.Pool
+
 // Return a new Wok server struct
 func NewWok(w Wok) *Wok {
-	if w.Host == "" {
-		w.Host = "http://localhost"
-	}
 	return &Wok{
 		Address:  w.Address,
 		Host:     w.Host,
@@ -38,20 +38,27 @@ func NewWok(w Wok) *Wok {
 	}
 }
 
-func (w *Wok) StartWok(db DbConfig) {
-	l, err := NewLogger()
-	if err != nil {
-		panic(err)
+func initpool() {
+	pool = &sync.Pool{
+		New: func() any {
+			return Context{
+				Resp: nil,
+				Req:  nil,
+				Ctx:  nil,
+			}
+		},
 	}
-	WokLog = l
+}
+
+func (w *Wok) StartWok(db ...DbConfig) {
 	if w.Database {
-		if err := validatedbconfig(db); err != nil {
+		if err := validatedbconfig(db[0]); err != nil {
 			panic(err)
 		}
 
 		for _, arg := range os.Args {
 			if arg == "droptable" {
-				dropTable(&db)
+				dropTable(&db[0])
 				os.Exit(0)
 			}
 
@@ -61,16 +68,23 @@ func (w *Wok) StartWok(db DbConfig) {
 			}
 		}
 
-		if err := connectToDB(&db); err != nil {
+		if err := connectToDB(&db[0]); err != nil {
 			panic(err)
 		}
 
 		defer Database.Close()
+		initpool()
 		startServer(w)
 	}
 
+	for _, arg := range os.Args {
+		if arg == "logJSON" {
+			convertLogToJSON()
+			os.Exit(0)
+		}
+	}
+	initpool()
 	startServer(w)
-
 }
 
 var WokSession = StartSession()

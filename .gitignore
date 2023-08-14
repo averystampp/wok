@@ -1,3 +1,5 @@
 .env
 /cmd
 /test
+*.log
+*.exe

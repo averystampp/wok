@@ -1,7 +1,6 @@
 package wok
 
 import (
-	"context"
 	"net/http"
 	"path/filepath"
 )
@@ -12,27 +11,24 @@ type Handler func(Context) error
 
 // Takes a Wok handler and returns a traditional http.HandlerFunc
 func handlewokfunc(method string, handle Handler) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := Context{
-			Resp: w,
-			Req:  r,
-			Ctx:  context.TODO(),
-		}
+		ctx := pool.Get().(Context)
+		ctx.reset(w, r)
+
 		if ctx.Req.Method != method {
 			ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
 			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
-			WokLog.Warn(ctx, http.StatusText(http.StatusMethodNotAllowed))
+
 			return
 		}
 
 		if err := handle(ctx); err != nil {
 			ctx.Resp.Write([]byte(err.Error()))
-			WokLog.Info(ctx)
 			return
 		}
-		WokLog.Info(ctx)
+		pool.Put(&ctx)
 	}
+
 }
 
 func (wok *Wok) Prefix(fix string) {

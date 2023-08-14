@@ -28,6 +28,13 @@ type Context struct {
 	Ctx  context.Context
 }
 
+// resets context from sync.Pool
+func (ctx *Context) reset(w http.ResponseWriter, r *http.Request) {
+	ctx.Ctx = context.TODO()
+	ctx.Resp = w
+	ctx.Req = r
+}
+
 // Write data to JSON
 func (ctx *Context) JSON(data interface{}) error {
 	body, err := json.Marshal(data)
@@ -178,7 +185,5 @@ func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadClose
 	if err != nil {
 		return nil, err
 	}
-
 	return res, nil
-
 }
