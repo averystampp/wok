@@ -1,6 +1,7 @@
 package wok
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -93,12 +94,6 @@ func (ctx *Context) MakeRequest(method, url string, data io.Reader) (*http.Respo
 	return res, nil
 }
 
-// Reads the request body and returns the data as an array of bytes or an error
-func (ctx *Context) ReadBody() ([]byte, error) {
-	defer ctx.Req.Body.Close()
-	return io.ReadAll(ctx.Req.Body)
-}
-
 func (ctx *Context) Redirect(url string) {
 	http.Redirect(ctx.Resp, ctx.Req, url, http.StatusPermanentRedirect)
 }
@@ -186,4 +181,29 @@ func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadClose
 		return nil, err
 	}
 	return res, nil
+}
+
+func (ctx *Context) Read() ([]byte, error) {
+	if ctx.Req.ContentLength < 0 {
+		return nil, fmt.Errorf("request body must be larger than 0")
+	}
+	buf := make([]byte, 256)
+	b := bytes.NewBuffer(nil)
+	for {
+		n, err := ctx.Req.Body.Read(buf)
+		defer ctx.Req.Body.Close()
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+
+		if n == 0 {
+			break
+		}
+		_, err = b.Write(buf[:n])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return b.Bytes(), nil
 }

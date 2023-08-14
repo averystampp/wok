@@ -10,6 +10,9 @@ Wok is my passion project. As time goes on I will add and remove features as I n
 like something should be added or changed in Wok feel free to make a PR. But I cannot promise that every feature
 will be added.
 
+Wok is not, nor will it probably every be as great as things like Fiber and other routers. But I wanted something
+to build and call my own when I make applications, even if that means I can't achieve the bleeding edge that large OS projects produce.
+
 Currently Wok is under development and I will commit breaking changes without warning.
 
 #### Simple Usage:
@@ -28,13 +31,39 @@ func main() {
 
 	app := wok.NewWok(config)
 	
+	app.Get("/", HelloFromWok)
 
+	app.StartWok()
+}
+
+func HelloFromWok(ctx wok.Context) error {
+	return ctx.SendString("Hello from Wok!")
+}
+
+```
+
+#### Use a database (Wok only supports postgres):
+```
+package main
+
+import (
+	"github.com/averystampp/wok"
+)
+
+func main() {
+	config := wok.Wok{
+		Address:  ":8080",
+		Database: true,
+	}
+
+	app := wok.NewWok(config)
+	
 	dbconfig := wok.DbConfig{
-		Host:            "localhost",
+		Host:            "{YOUR_POSTGRES_HOST}",
 		Port:            5432,
-		User:            "postgres",
-		Password:        "docker",
-		Dbname:          "postgres",
+		User:            "{YOUR_POSTGRES_USER}",
+		Password:        "{YOUR_POSTGRES_PASSWORD}",
+		Dbname:          "{DATABASE_NAME}",
 		MigrationFolder: "./migrations",
 	}
 
@@ -45,8 +74,6 @@ func main() {
 }
 
 func HelloFromWok(ctx wok.Context) error {
-	ctx.Resp.Write([]byte("Hello from Wok!"))
-	return nil
+	return ctx.SendString("Hello from Wok!")
 }
-
 ```
