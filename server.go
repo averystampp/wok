@@ -74,6 +74,11 @@ func (w *Wok) StartWok(db ...DbConfig) {
 
 		defer Database.Close()
 		initpool()
+		var err error
+		WokLog, err = NewLogger()
+		if err != nil {
+			log.Fatal(err)
+		}
 		startServer(w)
 	}
 
