@@ -183,14 +183,15 @@ func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadClose
 	return res, nil
 }
 
-func (ctx *Context) Read() ([]byte, error) {
+func (ctx *Context) Read(data io.ReadCloser) ([]byte, error) {
+	b := make([]byte, 256)
+	buf := bytes.NewBuffer(nil)
 	if ctx.Req.ContentLength < 0 {
-		return nil, fmt.Errorf("request body must be larger than 0")
+		return nil, fmt.Errorf("content length must be greater than 0")
 	}
-	buf := make([]byte, 256)
-	b := bytes.NewBuffer(nil)
+
 	for {
-		n, err := ctx.Req.Body.Read(buf)
+		n, err := data.Read(b)
 		defer ctx.Req.Body.Close()
 		if err != nil && err != io.EOF {
 			return nil, err
@@ -199,11 +200,12 @@ func (ctx *Context) Read() ([]byte, error) {
 		if n == 0 {
 			break
 		}
-		_, err = b.Write(buf[:n])
+
+		_, err = buf.Write(b[:n])
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return b.Bytes(), nil
+	return buf.Bytes(), nil
 }

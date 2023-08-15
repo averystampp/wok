@@ -1,7 +1,6 @@
 package wok
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 )
@@ -15,9 +14,9 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, ok := pool.Get().(Context)
 		if !ok {
-			fmt.Println("not ok fired")
 			ctx = Context{}
 		}
+
 		ctx.reset(w, r)
 
 		if ctx.Req.Method != method {
