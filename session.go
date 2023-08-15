@@ -1,7 +1,6 @@
 package wok
 
 import (
-	"runtime"
 	"sync"
 )
 
@@ -43,6 +42,5 @@ func (s *Session) DeleteItem(key string) {
 func (s *Session) NewSession() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Items = nil
-	runtime.GC()
+	clear(s.Items)
 }
