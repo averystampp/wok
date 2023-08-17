@@ -39,8 +39,10 @@ func (s *Session) DeleteItem(key string) {
 	delete(s.Items, key)
 }
 
-func (s *Session) NewSession() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	clear(s.Items)
-}
+// NewSession uses clear() a go 1.21 only stdlib function. This is commented out for now because I
+// needed to backport to 1.20.7. I currently require other packages that are no 1.21 packages
+// func (s *Session) NewSession() {
+// 	s.mu.Lock()
+// 	defer s.mu.Unlock()
+// 	clear(s.Items)
+// }
