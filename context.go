@@ -8,12 +8,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
+// Token is used to protect routes with the ProtectWithToken middleware.
+// See middleware.go for more information
 type Token struct {
 	Name    string `json:"name"`
 	Value   string `json:"value"`
@@ -29,55 +32,74 @@ type Context struct {
 	Ctx  context.Context
 }
 
-// resets context from sync.Pool
+// reset will take in the ResponseWrite and *Request handlewokfunc() and set it the
+// context cached from sync.Pool. This prevents and old Context and its data from being viewed
+// by other users
 func (ctx *Context) reset(w http.ResponseWriter, r *http.Request) {
 	ctx.Ctx = context.TODO()
 	ctx.Resp = w
 	ctx.Req = r
 }
 
-// Write data to JSON
-func (ctx *Context) JSON(data interface{}) error {
+// JSON will take in an interface and marshal it to []byte. JSON does not
+// enforce a content length and will write any amount of data to an array.
+//
+// The status must be a valid http.StatusCode.
+// See https://pkg.go.dev/net/http#pkg-constants for a list of valid HTTP status codes
+func (ctx *Context) JSON(data interface{}, status int) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 	ctx.Resp.Header().Set("Content-Type", "application/json")
-
-	return fmt.Errorf(string(body))
+	ctx.Resp.Write(body)
+	return nil
 }
 
-// Set key and value pairs for Ctx
-func (ctx *Context) CtxSetKey(key any, val any) {
+// SetCtxKey will take in any type and set it the the wok.Context.Ctx.
+// Note that wok.Context(s) are pooled and short lived. Use the session to hold
+// ephemeral data for a longer lived time.
+func (ctx *Context) SetCtxKey(key any, val any) {
 	ctx.Ctx = context.WithValue(ctx.Ctx, key, val)
 }
 
-// Returns value of key as a string
-func (ctx *Context) GetCtxKey(key any) string {
-	valuefromCtx := ctx.Ctx.Value(key)
-	value := fmt.Sprintf("%v", valuefromCtx)
-	return value
+// GetCtxKey will return the value stored at the given key (if any).
+// GetCtxKey will return nil if the key is not in the given context.
+func (ctx *Context) GetCtxKey(key any) any {
+	return ctx.Ctx.Value(key)
 }
 
-// Set any amount of cookies (does not make any CORS assumptions)
-func (ctx *Context) SetCookie(c ...*http.Cookie) {
+// SetCookie will take any amount of cookies and set them to the wok.Context.ResponseWriter.
+// Note that SetCookies does not make any CORS assumptions or enforce and cookies rules
+// it is up to the developer to set the cookie paramater
+// See https://pkg.go.dev/net/http#Cookie for documentation on cookies
+func (ctx *Context) SetCookies(c ...*http.Cookie) {
 	for _, cookie := range c {
 		http.SetCookie(ctx.Resp, cookie)
 	}
 }
 
-// Get a cookie from the request by its name
+// GetCookie queries the request by cookie name and returns a *http.Cookie if present.
 func (ctx *Context) GetCookie(name string) (*http.Cookie, error) {
 	return ctx.Req.Cookie(name)
 }
 
-// Sends the data as a string in the resposne
-func (ctx *Context) SendString(data string) error {
+// SendString will return the string arguement as a string in the resposne
+// body.
+//
+// The status must be a valid http.StatusCode.
+// See https://pkg.go.dev/net/http#pkg-constants for a list of valid HTTP status codes
+func (ctx *Context) SendString(data string, status int) {
 	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	return fmt.Errorf("%s", data)
+	ctx.Resp.Write([]byte(data))
+	ctx.Resp.WriteHeader(status)
 }
 
-// Makes a request to a URL. Returns a response or an error
+// MakeRequest will send a request to the given URL with the given data.
+// Returns a *http.Response and an error.
+//
+// Note that MakeRequest does not have any cookies or other data.
+// It only forwards the data in the request body.
 func (ctx *Context) MakeRequest(method, url string, data io.Reader) (*http.Response, error) {
 	var client http.Client
 
@@ -94,11 +116,18 @@ func (ctx *Context) MakeRequest(method, url string, data io.Reader) (*http.Respo
 	return res, nil
 }
 
+// Redirect will make a http.Redirect to the given url with the parent
+// Context as the Response and Request.
 func (ctx *Context) Redirect(url string) {
 	http.Redirect(ctx.Resp, ctx.Req, url, http.StatusPermanentRedirect)
 }
 
-func (ctx *Context) CreateToken(secret string) (*http.Cookie, error) {
+// CreateToken creates a apikey cookie that can then be sent back to the client
+// in a response to validate future requests to routes that use the ProtectWithToken
+// middleware. CreateToken uses a JWT like way of encrypting a token.
+//
+// CreateToken uses TokenSecret as its signing key.
+func (ctx *Context) CreateToken() (*http.Cookie, error) {
 	t1 := Token{
 		Name:    "APIKEY",
 		Value:   "thisisyourkey",
@@ -112,7 +141,7 @@ func (ctx *Context) CreateToken(secret string) (*http.Cookie, error) {
 	}
 	encoded := base64.RawURLEncoding.EncodeToString(key)
 
-	hash := hmac.New(sha256.New, []byte(secret))
+	hash := hmac.New(sha256.New, []byte(TokenSecret))
 
 	_, err = hash.Write([]byte(encoded))
 	if err != nil {
@@ -129,6 +158,11 @@ func (ctx *Context) CreateToken(secret string) (*http.Cookie, error) {
 
 }
 
+// ValidateToken takes in the apikey cookie from the request and validates it based off
+// your secret that you set during init. It also ensures that the token taken from the server session
+// is not expired
+//
+// Note: If you do not set a secret, then you will not be able to use this function safely.
 func (ctx *Context) ValidateToken(secret string) error {
 	hash := hmac.New(sha256.New, []byte(secret))
 	cook, err := ctx.GetCookie("apikey")
@@ -148,7 +182,7 @@ func (ctx *Context) ValidateToken(secret string) error {
 
 	if t.Expires < time.Now().Unix() {
 		data := map[string]string{"error": "token is expired"}
-		return ctx.JSON(data)
+		return ctx.JSON(data, http.StatusBadRequest)
 	}
 
 	hash.Write([]byte(vals[0]))
@@ -162,6 +196,9 @@ func (ctx *Context) ValidateToken(secret string) error {
 	return nil
 }
 
+// MakeAuthAPICall is for making an HTTP request to a Wok.Handler that leverages the
+// ProtectWithToken middleware. This adds the api key to the request and returns a
+// *http.Response or an error.
 func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadCloser) (*http.Response, error) {
 	client := http.Client{}
 
@@ -183,18 +220,21 @@ func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadClose
 	return res, nil
 }
 
-func (ctx *Context) Read(data io.ReadCloser) ([]byte, error) {
+// ReadData takes an io.ReadCloser and reads it into a *bytes.Buffer
+// writing 256 bytes into the buffer at once.
+func (ctx *Context) ReadData(data io.ReadCloser) ([]byte, error) {
 	b := make([]byte, 256)
 	buf := bytes.NewBuffer(nil)
-	if ctx.Req.ContentLength < 0 {
-		return nil, fmt.Errorf("content length must be greater than 0")
-	}
+
+	defer ctx.Req.Body.Close()
 
 	for {
 		n, err := data.Read(b)
-		defer ctx.Req.Body.Close()
-		if err != nil && err != io.EOF {
-			return nil, err
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			break
 		}
 
 		if n == 0 {
@@ -205,7 +245,21 @@ func (ctx *Context) Read(data io.ReadCloser) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
+	}
+	return buf.Bytes(), nil
+}
+
+// SendHTML takes in your HTML as a string and any data you want to pass to the template
+// and parses it into a *html.Template, it also sets the content type to text/html, and
+// returns template.Execute with the ResponseWriter and passed data as arguments
+func (ctx *Context) SendHTML(html string, data any) error {
+	tmpl, err := template.New("tmp").Parse(html)
+	if err != nil {
+		return err
 	}
 
-	return buf.Bytes(), nil
+	ctx.Resp.Header().Set("Content-Type", "text/html")
+
+	return tmpl.Execute(ctx.Resp, data)
 }

@@ -20,7 +20,7 @@ func index(ctx Context) error {
 		Body: []string{"this", "is", "the", "body"},
 		Code: 200,
 	}
-	return ctx.JSON(map[string]interface{}{"data": data})
+	return ctx.JSON(map[string]interface{}{"data": data}, http.StatusOK)
 }
 
 func TestServer(t *testing.T) {
