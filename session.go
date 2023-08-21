@@ -1,7 +1,10 @@
 package wok
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"sync"
+	"time"
 )
 
 type Session struct {
@@ -37,6 +40,27 @@ func (s *Session) DeleteItem(key string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.Items, key)
+}
+
+func (s *Session) SweepSession() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for key := range s.Items {
+		b, err := base64.RawURLEncoding.DecodeString(key)
+		if err != nil {
+			return err
+		}
+		t := &Token{}
+		if err := json.Unmarshal(b, t); err != nil {
+			return err
+		}
+
+		if t.Expires < time.Now().Unix() {
+			delete(s.Items, key)
+		}
+	}
+	return nil
 }
 
 // NewSession uses clear() a go 1.21 only stdlib function. This is commented out for now because I
