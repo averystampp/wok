@@ -21,7 +21,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 
 		if ctx.Req.Method != method {
 			ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
-			ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+			ctx.SendString(http.StatusText(http.StatusMethodNotAllowed))
 			return
 		}
 
@@ -29,6 +29,7 @@ func handlewokfunc(method string, handle Handler) http.HandlerFunc {
 			ctx.Resp.Write([]byte(err.Error()))
 			return
 		}
+
 		WokLog.Info(ctx)
 		pool.Put(&ctx)
 	}

@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -89,10 +90,9 @@ func (ctx *Context) GetCookie(name string) (*http.Cookie, error) {
 //
 // The status must be a valid http.StatusCode.
 // See https://pkg.go.dev/net/http#pkg-constants for a list of valid HTTP status codes
-func (ctx *Context) SendString(data string, status int) {
+func (ctx *Context) SendString(data string) {
 	ctx.Resp.Header().Set("Content-Type", "text/plain")
 	ctx.Resp.Write([]byte(data))
-	ctx.Resp.WriteHeader(status)
 }
 
 // MakeRequest will send a request to the given URL with the given data.
@@ -262,4 +262,8 @@ func (ctx *Context) SendHTML(html string, data any) error {
 	ctx.Resp.Header().Set("Content-Type", "text/html")
 
 	return tmpl.Execute(ctx.Resp, data)
+}
+
+func (ctx *Context) Error(data string) error {
+	return errors.New(data)
 }
