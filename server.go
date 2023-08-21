@@ -22,19 +22,18 @@ const (
 	WOK_VERSION = "Wok v1.0.0"
 )
 
-var WokLog = &Log{}
-
-var pool *sync.Pool
+var (
+	pool   *sync.Pool
+	logger *woklog
+	err    error
+)
 
 // Return a new Wok server struct
-func NewWok(w Wok) *Wok {
+func NewWok(addr string, db bool) *Wok {
 	return &Wok{
-		Address:  w.Address,
-		Host:     w.Host,
+		Address:  addr,
 		mux:      &http.ServeMux{},
-		CertFile: w.CertFile,
-		KeyFile:  w.KeyFile,
-		Database: w.Database,
+		Database: db,
 	}
 }
 
@@ -51,6 +50,11 @@ func initpool() {
 }
 
 func (w *Wok) StartWok(db ...DbConfig) {
+	initpool()
+	logger, err = newLogger()
+	if err != nil {
+		panic(err)
+	}
 	if w.Database {
 		if err := validatedbconfig(db[0]); err != nil {
 			panic(err)
@@ -73,13 +77,7 @@ func (w *Wok) StartWok(db ...DbConfig) {
 		}
 
 		defer Database.Close()
-		initpool()
-		var err error
-		WokLog, err = NewLogger()
-		if err != nil {
-			log.Fatal(err)
-		}
-		startServer(w)
+		w.startServer()
 	}
 
 	for _, arg := range os.Args {
@@ -88,18 +86,12 @@ func (w *Wok) StartWok(db ...DbConfig) {
 			os.Exit(0)
 		}
 	}
-	initpool()
-	var err error
-	WokLog, err = NewLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
-	startServer(w)
+	w.startServer()
 }
 
 var WokSession = StartSession()
 
-func startServer(w *Wok) {
+func (w *Wok) startServer() {
 	fmt.Println(WOK_VERSION)
 	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.Address)
 	if w.CertFile != "" && w.KeyFile != "" {

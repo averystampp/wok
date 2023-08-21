@@ -24,11 +24,7 @@ func index(ctx Context) error {
 }
 
 func TestServer(t *testing.T) {
-	config := Wok{
-		Address:  ":3000",
-		Database: false,
-	}
-	app := NewWok(config)
+	app := NewWok(":3000", false)
 
 	app.Get("/", index)
 

@@ -28,12 +28,12 @@ var TokenSecret string
 
 // Context controls ResponseWriter and pointer to Request, used to extend methods
 type Context struct {
+	Ctx  context.Context
 	Resp http.ResponseWriter
 	Req  *http.Request
-	Ctx  context.Context
 }
 
-// reset will take in the ResponseWrite and *Request handlewokfunc() and set it the
+// reset will take in the ResponseWriter and *Request in handlewokfunc() and set it the
 // context cached from sync.Pool. This prevents and old Context and its data from being viewed
 // by other users
 func (ctx *Context) reset(w http.ResponseWriter, r *http.Request) {
@@ -266,4 +266,12 @@ func (ctx *Context) SendHTML(html string, data any) error {
 
 func (ctx *Context) Error(data string) error {
 	return errors.New(data)
+}
+
+func (ctx *Context) LogInfo(msg string) {
+	logger.Info(ctx, msg)
+}
+
+func (ctx *Context) LogWarn(msg string) {
+	logger.Warn(ctx, msg)
 }
