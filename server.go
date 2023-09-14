@@ -1,21 +1,16 @@
 package wok
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"sync"
 )
 
 type Wok struct {
-	Host     string
 	Address  string
-	prefix   string
 	mux      *http.ServeMux
 	CertFile string
 	KeyFile  string
-	Database bool
 }
 
 const (
@@ -23,77 +18,48 @@ const (
 )
 
 var (
-	pool   *sync.Pool
-	logger *woklog
-	err    error
+	err        error
+	wokSession *Session
+	wokLogger  *WokLog
 )
 
 // Return a new Wok server struct
-func NewWok(addr string, db bool) *Wok {
+func NewWok(addr string) *Wok {
 	return &Wok{
-		Address:  addr,
-		mux:      &http.ServeMux{},
-		Database: db,
+		Address: addr,
+		mux:     http.NewServeMux(),
 	}
 }
 
-func initpool() {
-	pool = &sync.Pool{
-		New: func() any {
-			return Context{
-				Resp: nil,
-				Req:  nil,
-				Ctx:  nil,
-			}
-		},
-	}
+func (w *Wok) WithDatabase(config *Config) {
+	Store.Connect(config)
 }
 
-func (w *Wok) StartWok(db ...DbConfig) {
-	initpool()
-	logger, err = newLogger()
+func (w *Wok) WithSession() {
+	wokSession = newSession()
+}
+
+func (w *Wok) WithLogger() {
+	wokLogger, err = newLogger()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	if w.Database {
-		if err := validatedbconfig(db[0]); err != nil {
-			panic(err)
-		}
+}
 
-		for _, arg := range os.Args {
-			if arg == "droptable" {
-				dropTable(&db[0])
-				os.Exit(0)
-			}
-
-			if arg == "logJSON" {
-				convertLogToJSON()
-				os.Exit(0)
-			}
-		}
-
-		if err := connectToDB(&db[0]); err != nil {
-			panic(err)
-		}
-
-		defer Database.Close()
-		w.startServer()
-	}
-
+func (w *Wok) StartWok() {
 	for _, arg := range os.Args {
-		if arg == "logJSON" {
-			convertLogToJSON()
+		if arg == "drop table" {
+			DropTable()
 			os.Exit(0)
 		}
 	}
 	w.startServer()
 }
 
-var WokSession = StartSession()
-
 func (w *Wok) startServer() {
-	fmt.Println(WOK_VERSION)
-	fmt.Printf("---------------------------------\n| Server starting on port %s |\n---------------------------------\n", w.Address)
+	if wokLogger != nil {
+		wokLogger.General("Server starting on port" + w.Address)
+	}
 	if w.CertFile != "" && w.KeyFile != "" {
 		log.Fatal(http.ListenAndServeTLS(w.Address, w.CertFile, w.KeyFile, w.mux))
 	} else {

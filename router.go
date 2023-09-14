@@ -1,6 +1,7 @@
 package wok
 
 import (
+	"context"
 	"net/http"
 	"path/filepath"
 )
@@ -9,75 +10,89 @@ import (
 // http handler converter
 type Handler func(Context) error
 
-// Takes a Wok handler and returns a traditional http.HandlerFunc
-func (h Handler) handlewokfunc(method string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, ok := pool.Get().(Context)
-		if !ok {
-			ctx = Context{}
-		}
-
-		ctx.reset(w, r)
-
-		if ctx.Req.Method != method {
-			ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
-			ctx.SendString(http.StatusText(http.StatusMethodNotAllowed))
-			ctx.LogWarn(http.StatusText(http.StatusMethodNotAllowed))
-			return
-		}
-
-		if err := h(ctx); err != nil {
-			ctx.SendString(err.Error())
-			return
-		}
-		pool.Put(&ctx)
-	}
-
+type WokRoute struct {
+	path    string
+	method  string
+	wokFunc Handler
 }
 
-func (wok *Wok) Prefix(fix string) {
-	wok.prefix = fix
+func (router *WokRoute) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := Context{
+		Resp: w,
+		Req:  r,
+		Ctx:  context.TODO(),
+	}
+
+	if r.Method != router.method {
+		ctx.Resp.WriteHeader(http.StatusMethodNotAllowed)
+		ctx.Resp.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+		return
+	}
+
+	if err := router.wokFunc(ctx); err != nil {
+		ctx.Resp.Write([]byte(err.Error()))
+		return
+	}
+	if wokLogger != nil {
+		wokLogger.Info(&ctx, "msg")
+	}
 }
 
 // Enforce the POST method for the passed handler
-func (wok *Wok) Post(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodPost))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodPost))
+func (wok *Wok) Post(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodPost,
+	}
+	wok.mux.Handle(path, router)
 }
 
-// Enforce the GET method for the passed handler
-func (wok *Wok) Get(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodGet))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodGet))
+func (wok *Wok) Get(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodGet,
+	}
+	wok.mux.Handle(path, router)
 }
 
-// Enforce the PATCH method for the passed handler
-func (wok *Wok) Patch(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodPatch))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodPatch))
+func (wok *Wok) Patch(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodPatch,
+	}
+	wok.mux.Handle(path, router)
 }
 
-// Enforce PUT method for the passed handler
-func (wok *Wok) Put(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodPut))
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodPut))
+func (wok *Wok) Put(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodPut,
+	}
+	wok.mux.Handle(path, router)
 }
 
-// Enforce the OPTIONS method for the passed handler
-func (wok *Wok) Options(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodOptions))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodOptions))
+func (wok *Wok) Options(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodOptions,
+	}
+	wok.mux.Handle(path, router)
 }
 
-// Enforce the DELETE method for the passed handler
-func (wok *Wok) Delete(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodDelete))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodDelete))
+func (wok *Wok) Delete(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodDelete,
+	}
+	wok.mux.Handle(path, router)
 }
 
-func (wok *Wok) Head(route string, handle Handler) {
-	wok.mux.Handle(wok.prefix+route, handle.handlewokfunc(http.MethodHead))
-	wok.mux.Handle(wok.prefix+route+"/", handle.handlewokfunc(http.MethodHead))
+func (wok *Wok) Head(path string, handle Handler) {
+	router := &WokRoute{
+		wokFunc: handle,
+		method:  http.MethodHead,
+	}
+	wok.mux.Handle(path, router)
 }
 
 func (wok *Wok) ServeDir(route string, path string) error {

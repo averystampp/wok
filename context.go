@@ -7,13 +7,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // Token is used to protect routes with the ProtectWithToken middleware.
@@ -33,25 +31,14 @@ type Context struct {
 	Req  *http.Request
 }
 
-// reset will take in the ResponseWriter and *Request in handlewokfunc() and set it the
-// context cached from sync.Pool. This prevents and old Context and its data from being viewed
-// by other users
-func (ctx *Context) reset(w http.ResponseWriter, r *http.Request) {
-	ctx.Ctx = context.TODO()
-	ctx.Resp = w
-	ctx.Req = r
-}
-
 // JSON will take in an interface and marshal it to []byte. JSON does not
 // enforce a content length and will write any amount of data to an array.
-//
-// The status must be a valid http.StatusCode.
-// See https://pkg.go.dev/net/http#pkg-constants for a list of valid HTTP status codes
-func (ctx *Context) JSON(data interface{}, status int) error {
+func (ctx *Context) JSON(data interface{}) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
+
 	ctx.Resp.Header().Set("Content-Type", "application/json")
 	ctx.Resp.Write(body)
 	return nil
@@ -87,9 +74,6 @@ func (ctx *Context) GetCookie(name string) (*http.Cookie, error) {
 
 // SendString will return the string arguement as a string in the resposne
 // body.
-//
-// The status must be a valid http.StatusCode.
-// See https://pkg.go.dev/net/http#pkg-constants for a list of valid HTTP status codes
 func (ctx *Context) SendString(data string) {
 	ctx.Resp.Header().Set("Content-Type", "text/plain")
 	ctx.Resp.Write([]byte(data))
@@ -129,9 +113,8 @@ func (ctx *Context) Redirect(url string) {
 // CreateToken uses TokenSecret as its signing key.
 func (ctx *Context) CreateToken() (*http.Cookie, error) {
 	t1 := Token{
-		Name:    "APIKEY",
-		Value:   "thisisyourkey",
-		Expires: time.Now().Add(time.Minute * 30).Unix(),
+		Name:  "APIKEY",
+		Value: "thisisyourkey",
 	}
 
 	key, err := json.Marshal(&t1)
@@ -151,11 +134,9 @@ func (ctx *Context) CreateToken() (*http.Cookie, error) {
 	cval := fmt.Sprintf("%s.%x", encoded, hash.Sum(nil))
 
 	return &http.Cookie{
-		Name:    "apikey",
-		Value:   cval,
-		Expires: time.Now().Add(time.Minute * 30),
+		Name:  "apikey",
+		Value: cval,
 	}, nil
-
 }
 
 // ValidateToken takes in the apikey cookie from the request and validates it based off
@@ -166,8 +147,8 @@ func (ctx *Context) CreateToken() (*http.Cookie, error) {
 func (ctx *Context) ValidateToken(secret string) error {
 	hash := hmac.New(sha256.New, []byte(secret))
 	cook, err := ctx.GetCookie("apikey")
-	if err != nil {
-		return err
+	if err == http.ErrNoCookie {
+		return ctx.JSON(map[string]string{"error": "request is not authorized"})
 	}
 	vals := strings.Split(cook.Value, ".")
 	b, err := base64.RawURLEncoding.DecodeString(vals[0])
@@ -178,11 +159,6 @@ func (ctx *Context) ValidateToken(secret string) error {
 
 	if err := json.Unmarshal(b, t); err != nil {
 		return err
-	}
-
-	if t.Expires < time.Now().Unix() {
-		data := map[string]string{"error": "token is expired"}
-		return ctx.JSON(data, http.StatusBadRequest)
 	}
 
 	hash.Write([]byte(vals[0]))
@@ -199,6 +175,7 @@ func (ctx *Context) ValidateToken(secret string) error {
 // MakeAuthAPICall is for making an HTTP request to a Wok.Handler that leverages the
 // ProtectWithToken middleware. This adds the api key to the request and returns a
 // *http.Response or an error.
+// Deprecated use Forward() to push requests with authentication
 func (ctx *Context) MakeAuthAPICall(method string, url string, body io.ReadCloser) (*http.Response, error) {
 	client := http.Client{}
 
@@ -264,14 +241,16 @@ func (ctx *Context) SendHTML(html string, data any) error {
 	return tmpl.Execute(ctx.Resp, data)
 }
 
-func (ctx *Context) Error(data string) error {
-	return errors.New(data)
+func (ctx *Context) SetValue(key string, val interface{}) error {
+	return wokSession.AddItem(key, val)
+
 }
 
-func (ctx *Context) LogInfo(msg string) {
-	logger.Info(ctx, msg)
+func (ctx *Context) DeleteValue(key string) error {
+	return wokSession.DeleteItem(key)
+
 }
 
-func (ctx *Context) LogWarn(msg string) {
-	logger.Warn(ctx, msg)
+func (ctx *Context) GetValue(key string) (interface{}, error) {
+	return wokSession.RetrieveItem(key)
 }

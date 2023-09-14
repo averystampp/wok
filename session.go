@@ -3,6 +3,7 @@ package wok
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -13,33 +14,45 @@ type Session struct {
 	mu    sync.Mutex
 }
 
-func StartSession() *Session {
+func newSession() *Session {
 	return &Session{
 		Items: make(map[string]interface{}),
 	}
 }
 
 // If key already exists it will overwrite the value
-func (s *Session) AddItem(key string, val interface{}) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.Items[key] = val
-}
-
-func (s *Session) RetrieveItem(key string) interface{} {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	val, ok := s.Items[key]
-	if ok {
-		return val
+func (s *Session) AddItem(key string, val interface{}) error {
+	if s != nil {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.Items[key] = val
+		return nil
 	}
-	return nil
+	return fmt.Errorf("no session")
 }
 
-func (s *Session) DeleteItem(key string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.Items, key)
+func (s *Session) RetrieveItem(key string) (interface{}, error) {
+	if s != nil {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		val, ok := s.Items[key]
+		if ok {
+			return val, nil
+		}
+		return nil, fmt.Errorf("no values associated with the given key")
+
+	}
+	return nil, fmt.Errorf("no session")
+}
+
+func (s *Session) DeleteItem(key string) error {
+	if s != nil {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		delete(s.Items, key)
+		return nil
+	}
+	return fmt.Errorf("no session")
 }
 
 func (s *Session) SweepSession() error {
@@ -64,7 +77,7 @@ func (s *Session) SweepSession() error {
 }
 
 // NewSession uses clear() a go 1.21 only stdlib function. This is commented out for now because I
-// needed to backport to 1.20.7. I currently require other packages that are no 1.21 packages
+// needed to backport to 1.20.7. I currently require other packages that do not support 1.21
 // func (s *Session) NewSession() {
 // 	s.mu.Lock()
 // 	defer s.mu.Unlock()
