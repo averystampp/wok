@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -26,7 +27,6 @@ var TokenSecret string
 
 // Context controls ResponseWriter and pointer to Request, used to extend methods
 type Context struct {
-	Ctx  context.Context
 	Resp http.ResponseWriter
 	Req  *http.Request
 }
@@ -40,21 +40,21 @@ func (ctx *Context) JSON(data interface{}) error {
 	}
 
 	ctx.Resp.Header().Set("Content-Type", "application/json")
-	ctx.Resp.Write(body)
-	return nil
+	return errors.New(string(body))
 }
 
 // SetCtxKey will take in any type and set it the the wok.Context.Ctx.
 // Note that wok.Context(s) are pooled and short lived. Use the session to hold
 // ephemeral data for a longer lived time.
 func (ctx *Context) SetCtxKey(key any, val any) {
-	ctx.Ctx = context.WithValue(ctx.Ctx, key, val)
+	c := ctx.Req.Context()
+	c = context.WithValue(c, key, val)
 }
 
 // GetCtxKey will return the value stored at the given key (if any).
 // GetCtxKey will return nil if the key is not in the given context.
 func (ctx *Context) GetCtxKey(key any) any {
-	return ctx.Ctx.Value(key)
+	return ctx.Req.Context().Value(key)
 }
 
 // SetCookie will take any amount of cookies and set them to the wok.Context.ResponseWriter.
@@ -74,9 +74,9 @@ func (ctx *Context) GetCookie(name string) (*http.Cookie, error) {
 
 // SendString will return the string arguement as a string in the resposne
 // body.
-func (ctx *Context) SendString(data string) {
+func (ctx *Context) SendString(data string) error {
 	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	ctx.Resp.Write([]byte(data))
+	return errors.New(data)
 }
 
 // MakeRequest will send a request to the given URL with the given data.

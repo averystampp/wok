@@ -25,7 +25,7 @@ func (l *WokLog) Info(ctx *Context, msg string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.Logger.InfoContext(ctx.Ctx, msg, "route", ctx.Req.URL.Path, "method", ctx.Req.Method)
+	l.Logger.InfoContext(ctx.Req.Context(), msg, "route", ctx.Req.URL.Path, "method", ctx.Req.Method)
 }
 
 func (l *WokLog) General(msg string, args ...any) {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -48,6 +49,25 @@ func (d *Database) Connect(config *Config) {
 		token VARCHAR( 1004 ) NOT NULL,
 		expires VARCHAR( 256 ) NOT NULL
 	);`)
+
+	if config.MigrationFolder != "" {
+		folder, err := os.ReadDir(config.MigrationFolder)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, file := range folder {
+			data, err := os.ReadFile(config.MigrationFolder + "/" + file.Name())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			_, err = db.Exec(string(data))
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
 
 	if err != nil {
 		log.Fatal(err)

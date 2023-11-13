@@ -1,7 +1,6 @@
 package wok
 
 import (
-	"context"
 	"net/http"
 	"path/filepath"
 )
@@ -20,7 +19,6 @@ func (router *WokRoute) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := Context{
 		Resp: w,
 		Req:  r,
-		Ctx:  context.TODO(),
 	}
 
 	if r.Method != router.method {
@@ -31,8 +29,13 @@ func (router *WokRoute) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := router.wokFunc(ctx); err != nil {
 		ctx.Resp.Write([]byte(err.Error()))
+
+		if wokLogger != nil {
+			wokLogger.Info(&ctx, "msg")
+		}
 		return
 	}
+
 	if wokLogger != nil {
 		wokLogger.Info(&ctx, "msg")
 	}

@@ -34,31 +34,29 @@ func getValue(ctx Context) error {
 	}
 	if stringVal != "value" {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("value was supposed to be: \"value\", but returned: %s", stringVal)
+		return fmt.Errorf("value was supposed to be: \"value\", but returned: " + stringVal)
 	}
 	return nil
 }
 
-func TestSession(t *testing.T) {
+func TestAddItem(t *testing.T) {
 	var client http.Client
-	t.Run("create value", func(t *testing.T) {
-		res, err := client.Get("http://localhost" + addr + "/session/create")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if res.StatusCode != 200 {
-			t.Fatal(res.Status)
-		}
-	})
-
-	t.Run("get value", func(t *testing.T) {
-		res, err := client.Get("http://localhost" + addr + "/session/get")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if res.StatusCode != 200 {
-			t.Fatal(res.Status)
-		}
-	})
+	res, err := client.Get("http://localhost" + addr + "/session/create")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != 200 {
+		t.Fatal(res.Status)
+	}
+}
+func TestRetrieveItem(t *testing.T) {
+	var client http.Client
+	res, err := client.Get("http://localhost" + addr + "/session/get")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != 200 {
+		t.Fatal(res.Status)
+	}
 
 }

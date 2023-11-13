@@ -1,6 +1,7 @@
 package wok
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -59,6 +60,8 @@ func (w *Wok) StartWok() {
 func (w *Wok) startServer() {
 	if wokLogger != nil {
 		wokLogger.General("Server starting on port" + w.Address)
+	} else {
+		fmt.Println("Server starting on port" + w.Address)
 	}
 	if w.CertFile != "" && w.KeyFile != "" {
 		log.Fatal(http.ListenAndServeTLS(w.Address, w.CertFile, w.KeyFile, w.mux))
