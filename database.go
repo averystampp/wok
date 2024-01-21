@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Config struct {
+type DatabaseOpts struct {
 	Host            string
 	Port            int
 	SSL             bool
@@ -19,13 +19,9 @@ type Config struct {
 	MigrationFolder string
 }
 
-type Database struct {
-	Database *sql.DB
-}
+var DB *sql.DB
 
-var Store Database
-
-func (d *Database) Connect(config *Config) {
+func Connect(config *DatabaseOpts) {
 	sslString := "disable"
 	if config.SSL {
 		sslString = "enable"
@@ -38,40 +34,29 @@ func (d *Database) Connect(config *Config) {
 		config.Dbname,
 		sslString,
 	)
-
 	db, err := sql.Open("postgres", psqlInfo)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS csrf (
-		id serial PRIMARY KEY,
-		token VARCHAR( 1004 ) NOT NULL,
-		expires VARCHAR( 256 ) NOT NULL
-	);`)
-
 	if config.MigrationFolder != "" {
 		folder, err := os.ReadDir(config.MigrationFolder)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		for _, file := range folder {
 			data, err := os.ReadFile(config.MigrationFolder + "/" + file.Name())
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			_, err = db.Exec(string(data))
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
 	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	Store.Database = db
+	DB = db
 }

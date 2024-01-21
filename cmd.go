@@ -18,12 +18,13 @@ func DropTable() {
 		if len(table) == 0 {
 			break
 		}
-		qs := "DROP TABLE " + table
-		_, err = Store.Database.Exec(qs)
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-	}
 
+	}
+}
+
+func commands(cmd string) {
+	switch cmd {
+	case "droptable":
+		DropTable()
+	}
 }
