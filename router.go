@@ -80,8 +80,10 @@ func (r *Router) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		wr.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
 		return
 	}
-	r.middleware = append(r.middleware, handlers.handlers...)
-	for _, hand := range r.middleware {
+	var hs []Handler
+	hs = append(hs, r.middleware...)
+	hs = append(hs, handlers.handlers...)
+	for _, hand := range hs {
 		err := hand(Context{
 			Resp: wr,
 			Req:  req,
